@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1c1f26">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lista">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Lista · 26-27</title>
+<style>
+:root{
+  --ink:#1c1f26; --ink-2:#5b6472; --ink-3:#8c94a1;
+  --paper:#f7f6f3; --card:#fff; --line:#dcd9d2; --line-2:#eceae5;
+  --falta:#b3261e; --falta-bg:#fdecea; --falta-ln:#f0c4bf;
+  --retraso:#8a5a00; --retraso-bg:#fdf3e0; --retraso-ln:#eddcb8;
+  --just:#2c5f7c; --just-bg:#eaf2f7; --just-ln:#c5dae6;
+  --ok:#1f6b45;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  background:var(--paper);color:var(--ink);font-size:17px;line-height:1.35;
+  font-variant-numeric:tabular-nums;
+  padding-bottom:calc(108px + env(safe-area-inset-bottom));
+  overscroll-behavior-y:contain;-webkit-text-size-adjust:100%;
+}
+button,select,input,textarea{font:inherit;color:inherit}
+.hide{display:none !important}
+
+/* ---------- cabecera ---------- */
+header{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;
+  padding:calc(9px + env(safe-area-inset-top)) 12px 9px}
+.hrow{display:flex;align-items:center;gap:8px}
+.ctx{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px}
+.ctxBtn{background:none;border:0;padding:2px 0;text-align:left;cursor:pointer;color:#fff;display:block}
+.ctxBtn.big{font-size:21px;font-weight:650;letter-spacing:-.015em;line-height:1.15}
+.ctxBtn.big .chev{display:inline-block;font-size:13px;color:#98a1b0;margin-left:5px;
+  transition:transform .18s ease}
+.ctxBtn.big.abierto .chev{transform:rotate(180deg)}
+.ctxBtn.small{font-size:13px;color:#b9c0cc;border-bottom:1px dotted rgba(255,255,255,.28);
+  padding-bottom:1px}
+.iconbtn{position:relative;background:rgba(255,255,255,.12);border:0;color:#fff;
+  width:42px;height:42px;border-radius:12px;font-size:18px;display:grid;place-items:center;
+  cursor:pointer;flex:0 0 auto}
+.iconbtn:active{background:rgba(255,255,255,.26)}
+.iconbtn .dot{position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:50%;
+  background:#e8a33d;border:1.5px solid var(--ink)}
+
+/* ---------- selector ---------- */
+.picker{background:#252a33;padding:11px 12px 13px;color:#fff}
+.picker h3{margin:0 0 7px;font-size:11px;font-weight:600;color:#98a1b0;letter-spacing:.06em}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:rgba(255,255,255,.10);border:0;color:#fff;padding:8px 13px;border-radius:999px;
+  font-size:15px;font-weight:600;cursor:pointer;text-align:left;line-height:1.15}
+.chip[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.chip small{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}
+
+/* ---------- avisos ---------- */
+.banner{margin:10px 10px 0;padding:10px 12px;border-radius:11px;font-size:13.5px;line-height:1.4;
+  background:var(--falta-bg);border:1px solid var(--falta-ln);color:var(--falta);font-weight:600}
+
+/* ---------- lista ---------- */
+main{max-width:640px;margin:0 auto}
+.list{padding:9px 10px 0}
+.row{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;margin-bottom:6px;padding:0 10px 0 0;min-height:56px;cursor:pointer;
+  user-select:none;-webkit-touch-callout:none;touch-action:manipulation;
+  transition:background .13s ease,border-color .13s ease}
+.row:active{transform:scale(.995)}
+.row .num{width:38px;flex:0 0 38px;align-self:stretch;display:grid;place-items:center;
+  font-size:13.5px;color:var(--ink-3);border-right:1px solid var(--line-2);
+  border-radius:12px 0 0 12px;background:#faf9f7}
+.row .nm{flex:1;min-width:0;padding:9px 0;font-size:15.5px;line-height:1.25;letter-spacing:-.005em}
+.row .nm b{font-weight:650}
+.row .nm span{color:var(--ink-2);font-weight:400}
+.row .acc{font-size:11.5px;font-weight:600;color:var(--ink-2);flex:0 0 auto;
+  padding:3px 7px;border-radius:6px;background:#f0eeea}
+.row .acc.oculto{display:none}
+.row .note{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
+  background:#fff;display:grid;place-items:center;font-size:13px;color:var(--ink-3)}
+.row .note.has{border-color:var(--ink);color:var(--ink);background:#f7f6f3}
+.row[data-s="P"] .note{display:none}
+.row .st{flex:0 0 auto;width:33px;height:33px;border-radius:9px;display:grid;place-items:center;
+  font-size:14.5px;font-weight:700;background:transparent;
+  border:2px solid var(--line);color:transparent}
+.row[data-s="F"]{background:var(--falta-bg);border-color:var(--falta-ln)}
+.row[data-s="F"] .st{background:var(--falta);border-color:var(--falta);color:#fff}
+.row[data-s="R"]{background:var(--retraso-bg);border-color:var(--retraso-ln)}
+.row[data-s="R"] .st{background:var(--retraso);border-color:var(--retraso);color:#fff}
+.row[data-s="J"]{background:var(--just-bg);border-color:var(--just-ln)}
+.row[data-s="J"] .st{background:var(--just);border-color:var(--just);color:#fff}
+
+/* ---------- barra inferior ---------- */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(247,246,243,.97);
+  backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
+.bar .fila{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
+.tally{flex:1;min-width:0;font-size:13px;color:var(--ink-2);line-height:1.3}
+.tally b{color:var(--ink);font-size:15.5px;font-weight:650}
+.save{border:0;border-radius:12px;background:var(--ink);color:#fff;padding:0 20px;height:48px;
+  font-size:16px;font-weight:650;cursor:pointer;flex:0 0 auto}
+.save:active{transform:translateY(1px)}
+.save.done{background:var(--ok)}
+.recibo{font-size:12.5px;margin:8px auto 0;padding:7px 10px;border-radius:9px;line-height:1.35;
+  max-width:640px}
+.recibo.ok{background:#e8f2ec;color:#155c39;border:1px solid #bcdccb}
+.recibo.mal{background:var(--falta-bg);color:var(--falta);border:1px solid var(--falta-ln);font-weight:600}
+
+/* ---------- paneles ---------- */
+.pane{padding:14px}
+.pane h2{font-size:20px;margin:0 0 4px;letter-spacing:-.015em}
+.pane p.lead{margin:0 0 15px;color:var(--ink-2);font-size:14px}
+.block{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.block h3{margin:0 0 9px;font-size:15px}
+.btn{display:inline-block;border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:11px 14px;font-size:15px;font-weight:600;cursor:pointer;margin:0 6px 6px 0}
+.btn.dark{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.warn{color:var(--falta);border-color:#e6bdb8}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line-2)}
+th{font-size:11.5px;color:var(--ink-2);font-weight:600;letter-spacing:.03em}
+td.n,th.n{text-align:right;width:40px}
+tr.alu{cursor:pointer}
+tr.alu:active td{background:#faf9f7}
+td.det{font-size:13px;color:var(--ink-2);background:#faf9f7;padding:9px 8px}
+select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--line);
+  border-radius:9px;padding:10px;background:#fff;width:100%}
+.grid5{display:grid;grid-template-columns:32px 1fr;gap:8px;align-items:center;margin-bottom:6px}
+.muted{color:var(--ink-2);font-size:13px}
+.warnbox{background:var(--retraso-bg);border:1px solid var(--retraso-ln);border-radius:11px;
+  padding:11px;font-size:13.5px;margin-bottom:12px;line-height:1.45}
+.warnbox.rojo{background:var(--falta-bg);border-color:var(--falta-ln)}
+.diag{display:flex;justify-content:space-between;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--line-2);font-size:14px}
+.diag:last-of-type{border-bottom:0}
+.si{color:var(--ok);font-weight:650} .no{color:var(--falta);font-weight:650}
+
+/* ---------- hojas modales ---------- */
+.ovl{position:fixed;inset:0;background:rgba(28,31,38,.5);z-index:50;display:flex;
+  justify-content:center;align-items:flex-start;padding:0 10px}
+.sheet{background:var(--card);width:100%;max-width:520px;border-radius:14px;padding:16px;
+  margin-top:calc(56px + env(safe-area-inset-top));box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.sheet h4{margin:0 0 4px;font-size:16px}
+.sheet .sub{margin:0 0 11px;font-size:13px;color:var(--ink-2)}
+.sheet textarea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:10px;padding:10px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(124px + env(safe-area-inset-bottom));background:var(--ink);color:#fff;
+  padding:10px 16px;border-radius:999px;font-size:14px;z-index:60;opacity:0;
+  transition:opacity .2s;pointer-events:none;max-width:88%;text-align:center;line-height:1.3}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <button class="iconbtn hide" id="btnBack" aria-label="Volver">‹</button>
+    <div class="ctx">
+      <button class="ctxBtn big" id="ctxBig">—</button>
+      <button class="ctxBtn small" id="ctxSmall">—</button>
+    </div>
+    <button class="iconbtn" id="btnSum" aria-label="Resumen">▤</button>
+    <button class="iconbtn" id="btnCfg" aria-label="Ajustes">⚙<span class="dot hide" id="dotCfg"></span></button>
+  </div>
+</header>
+
+<div class="picker hide" id="picker">
+  <h3>CLASE</h3><div class="chips" id="chipsClase"></div>
+  <h3 style="margin-top:12px">HORA</h3><div class="chips" id="chipsHora"></div>
+</div>
+
+<main>
+  <div id="viewLista">
+    <div id="banner"></div>
+    <div class="list" id="list"></div>
+  </div>
+  <div id="viewSum" class="pane hide"></div>
+  <div id="viewCfg" class="pane hide"></div>
+</main>
+
+<div class="bar" id="bar">
+  <div class="fila"><div class="tally" id="tally"></div><button class="save" id="btnSave">Confirmar</button></div>
+  <div id="recibo"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ========================= DATOS ========================= */
+const ALUMNOS = {"1ºD": ["Almela Martínez, Ignacio", "Altemir Seller, Jordi", "Cova Trijillo, Diego Alejandro", "Díaz Vaquerizo, José", "Gallego Guillén, Javier", "García Pérez, Juan Pablo", "Gavira Castillo, David", "Gordo Sánchez de las Matas, Mateo", "Mejía López, Jonathan Moisés", "Villarrubia Moreno, Héctor", "Villavicencio López, Jonathan"], "2ºB": ["Acito Muñoz, Fabio", "Avilés Tassi, José Joaquín", "Cernea, Lucas Florín", "Chen Chen, Fengkai", "Chen Zhu, Wenhao", "Del Castillo, Gabriel Alejandro", "Eiras Gil, Saúl", "Elorza Delgado, Darío", "Hortigón Morán, Pablo", "Llana Vázquez, Luis", "Montoro Díaz, Álvaro", "Mora Rodríguez, David", "Rivera Luna, José Luis", "Rodríguez Galindo, José María", "Sanmartín Saavedra, Álvaro Guillermo", "Sovago Crisan, Alexandru", "Zamorano Vazquez, Mario Ronald"], "2ºC": ["Agudo Ares, Sergio", "Alcalde Berrendo, José Ignacio", "Asenjo Benavides, José Carlos", "Azapwah Nkeng, Gislain", "Benalcázar Torres, Mauricio", "Bravo Fernández, Carlos", "Buján Vicente, Álvaro", "Buna Sitoka, Alexander", "Cano Aliaga, Joseph Anthony", "Cuellar Hutupas, Jorge Gabriel", "De Pablo Sanz, Beltrán", "De Santiago Berrocal, Raúl", "De Torres Caraballo, Pablo", "Diamantis Contreras, Nestor Basil", "Flores Ramírez, Rodolfo Joaquín", "García Nieto, Miguel", "Hermoso Menéndez, Pablo", "Mera Cuesta, Ramsés", "Montesino Rodríguez, David", "Paja Álvarez, Gonzalo", "Pasán Díaz, Gabriel", "Pavón Mancheño, Nicolás", "Prado Perea, Pablo", "Rojas Fernández, Antonio", "Romero García, Juan", "Segovia Hernández, Moisés", "Solá Sánchez, Pablo", "Tendero Jiménez, Carlos", "Torres Betancur, Julián Mateo", "Vasquez Cabello, Massimo Octavio"], "2ºD": ["Aparicio Blazquez, Luis", "Fuertes García, Daniel", "González del Campo Alonso, Jesús Enrique", "González García, Santiago", "Lema Ávila, Aarón Alejandro", "López Rocamora, Rodrigo", "Martínez Escandon, José María", "Mendoza Pujalt, Jorge Augusto", "Ramírez Ferreira, Mateo", "Santamaría Torres, Daniel", "Santana Llanes, Samuel David", "Valverde León, Antonio"], "2ºA": []};
+
+const CLASES = [
+  {id:"1D-HMC", grupo:"1ºD", mat:"Historia del Mundo Contemporáneo", corto:"H.ª Mundo Cont."},
+  {id:"2B-HE",  grupo:"2ºB", mat:"Historia de España",               corto:"H.ª España"},
+  {id:"2C-HE",  grupo:"2ºC", mat:"Historia de España",               corto:"H.ª España"},
+  {id:"2C-HA",  grupo:"2ºC", mat:"Historia del Arte",                corto:"H.ª Arte"},
+  {id:"2D-HA",  grupo:"2ºD", mat:"Historia del Arte",                corto:"H.ª Arte"},
+  {id:"2A-GEH", grupo:"2ºA", mat:"Geografía e Historia",             corto:"Geografía e H.ª"}
+];
+const porId = id => CLASES.find(c=>c.id===id) || CLASES[0];
+const HORAS=[1,2,3,4,5,6,7];
+const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes"];
+const CICLO={P:"F",F:"R",R:"J",J:"P"};
+const ICONO={P:"",F:"F",R:"R",J:"J"};
+const NOMBRE_EST={F:"falta",R:"retraso",J:"justificada"};
+const VERSION="1.2";
+
+/* ================= ALMACENAMIENTO VERIFICADO ================= */
+let persistente=true, modoPersistente=null, ultimaVerif=null, fallo=null, corrupto=false;
+try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }catch(e){ persistente=false; }
+
+const K_SES="asist2627_sesiones", K_CFG="asist2627_config", K_ULT="asist2627_ultimo";
+
+function crudo(k){ try{ return persistente ? localStorage.getItem(k) : null; }catch(e){ return null; } }
+
+/* Si lo guardado no se puede interpretar, NO se devuelve un objeto vacío sin más:
+   se conserva el original bajo otra clave y se avisa, para no sobrescribir el curso. */
+function leerObjeto(k, def){
+  const raw = crudo(k);
+  if(raw===null || raw==="") return def;
+  try{
+    const o = JSON.parse(raw);
+    if(o && typeof o === "object") return o;
+    throw new Error("tipo inesperado");
+  }catch(e){
+    try{ localStorage.setItem(k+"_dañado_"+Date.now(), raw); }catch(e2){}
+    corrupto = true;
+    return def;
+  }
+}
+
+/* Escribe y relee del disco para comprobar que el dato está realmente ahí. */
+function escribir(k,v){
+  const s=JSON.stringify(v);
+  if(!persistente){
+    fallo="este navegador no permite guardar en el dispositivo";
+    return {ok:false, motivo:fallo};
+  }
+  try{
+    localStorage.setItem(k,s);
+    if(localStorage.getItem(k)!==s){
+      fallo="lo escrito no coincide con lo releído";
+      return {ok:false, motivo:fallo};
+    }
+    ultimaVerif=Date.now(); fallo=null;
+    return {ok:true};
+  }catch(e){
+    const lleno = e && (e.name==="QuotaExceededError" || /quota|exceed/i.test(e.message||""));
+    fallo = lleno ? "no queda espacio en el almacenamiento del navegador"
+                  : "el navegador rechazó la escritura";
+    return {ok:false, motivo:fallo};
+  }
+}
+
+let sesiones = leerObjeto(K_SES, {});
+
+/* Horario de Tajamar 26-27 ya cargado. Si lo cambias a mano, tus cambios mandan:
+   solo se reescribe cuando sube CFG_VERSION. */
+const CFG_VERSION = 2;
+const HORARIO = {"0-3": "2C-HE", "0-5": "2B-HE", "0-6": "2C-HA", "0-7": "2D-HA", "1-2": "2C-HA", "1-3": "2D-HA", "1-4": "2B-HE", "1-5": "1D-HMC", "2-2": "2C-HE", "2-3": "2D-HA", "2-4": "1D-HMC", "2-5": "2A-GEH", "2-6": "2C-HA", "2-7": "2B-HE", "3-1": "2C-HA", "3-2": "2A-GEH", "3-3": "1D-HMC", "3-4": "2C-HE", "4-2": "1D-HMC", "4-3": "2A-GEH", "4-4": "2B-HE", "4-6": "2D-HA", "4-7": "2C-HE"};
+const CFG_DEF = {cfgVersion:CFG_VERSION, horario:HORARIO,
+  inicios:["08:00", "09:00", "09:55", "11:25", "12:20", "13:10", "14:05"], fin:"14:50", ultimoBackup:null, syncUrl:""};
+
+let config;
+{
+  const g = leerObjeto(K_CFG, {});
+  if(!g.cfgVersion || g.cfgVersion < CFG_VERSION){
+    // Se conserva lo que es tuyo; se renueva lo que viene del centro.
+    config = Object.assign({}, CFG_DEF, {
+      syncUrl: g.syncUrl || "", ultimoBackup: g.ultimoBackup || null
+    });
+  } else {
+    config = Object.assign({}, CFG_DEF, g);
+  }
+}
+
+async function pedirPersistencia(){
+  if(!navigator.storage || !navigator.storage.persisted) return;
+  try{
+    modoPersistente = await navigator.storage.persisted();
+    if(!modoPersistente && navigator.storage.persist) modoPersistente = await navigator.storage.persist();
+  }catch(e){ modoPersistente=null; }
+  actualizarAviso();
+}
+const instalada = () => window.navigator.standalone===true ||
+  (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+
+/* ========================= ESTADO ========================= */
+let vista="lista", fecha=iso(new Date()), claseId=null, hora=null, pickerAbierto=false;
+const filas = new Map();
+
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function clave(){return fecha+"|"+claseId+"|"+hora;}
+function ses(){return sesiones[clave()]||null;}
+function alumnos(){return ALUMNOS[porId(claseId).grupo]||[];}
+function esHoy(){return fecha===iso(new Date());}
+function ddmm(f){return f.split("-").reverse().join("/");}
+function diaDe(f){return DIAS[(new Date(f+"T12:00")).getDay()-1]||"Fin de semana";}
+
+function ahoraTramo(){
+  const d=new Date(), dia=d.getDay()-1;
+  if(dia<0||dia>4) return {dia:null,hora:null};
+  const min=d.getHours()*60+d.getMinutes();
+  const mins=config.inicios.map(t=>{const[h,m]=t.split(":").map(Number);return h*60+m;});
+  const[fh,fm]=config.fin.split(":").map(Number);
+  const ANTES=8;
+  if(min<mins[0]-ANTES||min>fh*60+fm+15) return {dia,hora:null};
+  let h=1; for(let i=0;i<mins.length;i++) if(min>=mins[i]-ANTES) h=i+1;
+  return {dia,hora:h};
+}
+function autoSeleccionar(){
+  const g=leerObjeto(K_ULT,null), {dia,hora:h}=ahoraTramo();
+  let auto=false;
+  if(dia!==null && h!==null){
+    hora=h;
+    const cell=config.horario[dia+"-"+h];
+    if(cell){ claseId=cell; auto=true; }
+  }
+  if(!claseId) claseId=(g&&g.c)||CLASES[0].id;
+  if(!hora) hora=(g&&g.h)||1;
+  if(!CLASES.some(c=>c.id===claseId)) claseId=CLASES[0].id;
+  pickerAbierto = !auto;               // si el horario ya sabe qué toca, no estorba
+}
+
+/* ========================= RENDER ========================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function pintarCabecera(){
+  const c=porId(claseId), s=ses();
+  const big=$("#ctxBig"), small=$("#ctxSmall");
+  if(vista==="lista"){
+    big.innerHTML=esc(c.grupo)+" · "+hora+'ª<span class="chev">▾</span>';
+    big.classList.toggle("abierto",pickerAbierto);
+    small.textContent=c.corto+" · "+(esHoy()?"hoy":diaDe(fecha))+" "+ddmm(fecha)+(s&&s.ts?" · cerrado":"");
+    small.classList.remove("hide"); big.disabled=false;
+  }else{
+    big.innerHTML=vista==="sum"?"Resumen":"Ajustes";
+    big.classList.remove("abierto"); big.disabled=true;
+    small.textContent="Curso 26-27";
+  }
+  $("#btnBack").classList.toggle("hide",vista==="lista");
+}
+
+function pintarChips(){
+  const cc=$("#chipsClase"); cc.innerHTML="";
+  CLASES.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="chip"; b.innerHTML=esc(c.grupo)+"<small>"+esc(c.corto)+"</small>";
+    b.setAttribute("aria-pressed",c.id===claseId);
+    b.onclick=()=>{ claseId=c.id; recordar(); construirLista(); pintarChips(); pintarCabecera(); };
+    cc.appendChild(b);
+  });
+  const ch=$("#chipsHora"); ch.innerHTML="";
+  HORAS.forEach(h=>{
+    const b=document.createElement("button");
+    b.className="chip"; b.textContent=h+"ª"; b.setAttribute("aria-pressed",h===hora);
+    b.onclick=()=>{ hora=h; recordar(); construirLista(); pintarChips(); pintarCabecera(); };
+    ch.appendChild(b);
+  });
+}
+
+function acumulado(nombre){
+  let f=0;
+  for(const k in sesiones){
+    if(k.split("|")[1]!==claseId) continue;
+    if((sesiones[k].e||{})[nombre]==="F") f++;
+  }
+  return f;
+}
+
+/* La lista se construye una vez por clase; marcar solo repinta esa fila.
+   Repintar las 30 filas en cada toque hacía saltar el scroll en iOS. */
+function construirLista(){
+  const cont=$("#list"); cont.innerHTML=""; filas.clear();
+  if(alumnos().length===0){
+    cont.innerHTML='<div class="banner">Todavía no está cargada la lista de alumnos de '+
+      esc(porId(claseId).grupo)+'. No se puede pasar lista en este grupo.</div>';
+    pintarTally(); actualizarBanner(); return;
+  }
+  const frag=document.createDocumentFragment();
+  alumnos().forEach((nombre,i)=>{
+    const p=nombre.split(",");
+    const row=document.createElement("div");
+    row.className="row"; row.tabIndex=0; row.setAttribute("role","button");
+    row.innerHTML='<div class="num">'+(i+1)+'</div>'+
+      '<div class="nm"><b>'+esc(p[0])+'</b>'+(p[1]?'<span>,'+esc(p[1])+'</span>':'')+'</div>'+
+      '<div class="acc oculto"></div><div class="note">✎</div><div class="st"></div>';
+    row.onclick=e=>{
+      if(movido) return;                         // era un scroll, no un toque
+      if(e.target.classList.contains("note")) abrirNota(nombre); else marcar(nombre);
+    };
+    row.onkeydown=e=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();marcar(nombre);} };
+    filas.set(nombre,{el:row, acc:row.querySelector(".acc"),
+      note:row.querySelector(".note"), st:row.querySelector(".st")});
+    frag.appendChild(row);
+  });
+  cont.appendChild(frag);
+  alumnos().forEach(refrescarFila);
+  pintarTally(); actualizarBanner();
+}
+function refrescarFila(nombre){
+  const f=filas.get(nombre); if(!f) return;
+  const s=ses(), st=(s&&s.e&&s.e[nombre])||"P", nota=(s&&s.t&&s.t[nombre])||"";
+  const a=acumulado(nombre);
+  f.el.dataset.s=st;
+  f.st.textContent=ICONO[st];
+  f.acc.textContent=a>0?a+" F":"";
+  f.acc.classList.toggle("oculto",a===0);
+  f.note.classList.toggle("has",!!nota);
+  f.el.setAttribute("aria-label",nombre+": "+(st==="P"?"presente":NOMBRE_EST[st]));
+}
+
+function marcar(nombre){
+  const k=clave();
+  if(!sesiones[k]) sesiones[k]={e:{},t:{},ts:null,sync:null};
+  const sig=CICLO[sesiones[k].e[nombre]||"P"];
+  if(sig==="P") delete sesiones[k].e[nombre]; else sesiones[k].e[nombre]=sig;
+  sesiones[k].sync=null;
+  const r=escribir(K_SES,sesiones);
+  refrescarFila(nombre); pintarTally(); actualizarBanner();
+  if(!r.ok) mostrarRecibo(false,"No se ha podido guardar: "+r.motivo);
+}
+
+function pintarTally(){
+  const s=ses(), e=(s&&s.e)||{}, n={F:0,R:0,J:0};
+  Object.values(e).forEach(v=>{ if(n[v]!==undefined) n[v]++; });
+  const tot=alumnos().length, p=[];
+  if(n.F)p.push(n.F+" falta"+(n.F>1?"s":""));
+  if(n.R)p.push(n.R+" retraso"+(n.R>1?"s":""));
+  if(n.J)p.push(n.J+" justificada"+(n.J>1?"s":""));
+  $("#tally").innerHTML="<b>"+(tot-n.F-n.R-n.J)+"/"+tot+"</b> presentes"+(p.length?" · "+p.join(" · "):"");
+  const b=$("#btnSave");
+  if(s&&s.ts){ b.textContent="Cerrado ✓"; b.classList.add("done"); }
+  else { b.textContent="Confirmar"; b.classList.remove("done"); $("#recibo").innerHTML=""; }
+}
+function mostrarRecibo(ok,txt){
+  $("#recibo").innerHTML='<div class="recibo '+(ok?"ok":"mal")+'">'+esc(txt)+'</div>';
+}
+function actualizarBanner(){
+  const b=$("#banner"); let t="";
+  if(corrupto) t="Se han encontrado datos guardados que no se pueden leer. Se ha conservado una copia intacta. No borres nada y restaura tu último .json desde Ajustes.";
+  else if(fallo) t="Atención: el último guardado ha fallado ("+fallo+"). Apunta las faltas en otro sitio y revisa Ajustes.";
+  b.innerHTML = t ? '<div class="banner">'+esc(t)+'</div>' : "";
+}
+
+/* ---------- confirmar ---------- */
+$("#btnSave").onclick=async ()=>{
+  const k=clave();
+  if(!sesiones[k]) sesiones[k]={e:{},t:{},ts:null,sync:null};
+  if(sesiones[k].ts){
+    if(!confirm("Este parte ya está cerrado. ¿Quieres reabrirlo para modificarlo?")) return;
+    sesiones[k].ts=null; escribir(K_SES,sesiones);
+    $("#recibo").innerHTML=""; pintarTally(); pintarCabecera(); return;
+  }
+  sesiones[k].ts=Date.now();
+  const r=escribir(K_SES,sesiones);
+  if(!r.ok){
+    sesiones[k].ts=null; pintarTally(); actualizarBanner();
+    mostrarRecibo(false,"NO se ha guardado: "+r.motivo+". Apunta las faltas en otro sitio.");
+    return;
+  }
+  const disco=leerObjeto(K_SES,{})[k];
+  const nInc=Object.keys(sesiones[k].e).length;
+  if(!disco || !disco.ts || Object.keys(disco.e||{}).length!==nInc){
+    mostrarRecibo(false,"NO se ha guardado correctamente. Apunta las faltas en otro sitio.");
+    return;
+  }
+  const hh=new Date(disco.ts).toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"});
+  reciboBase="Guardado y verificado en el dispositivo a las "+hh+" · "+
+    nInc+" incidencia"+(nInc===1?"":"s");
+  mostrarRecibo(true,reciboBase);
+  pintarTally(); pintarCabecera(); actualizarBanner();
+  if(config.syncUrl) sincronizar([k]);
+};
+let reciboBase="";
+
+/* ---------- nota ---------- */
+function hoja(html){
+  const ovl=document.createElement("div"); ovl.className="ovl";
+  ovl.innerHTML='<div class="sheet">'+html+'</div>';
+  document.body.appendChild(ovl);
+  ovl.onclick=e=>{ if(e.target===ovl) ovl.remove(); };
+  return ovl;
+}
+function abrirNota(nombre){
+  const k=clave(), actual=(sesiones[k]&&sesiones[k].t&&sesiones[k].t[nombre])||"";
+  const ovl=hoja('<h4>'+esc(nombre)+'</h4><p class="sub">Nota de esta sesión</p>'+
+    '<textarea id="nt" placeholder="Justificante, aviso a familia, se marcha a las 12:30…">'+esc(actual)+'</textarea>'+
+    '<div style="margin-top:10px;display:flex;gap:8px"><button class="btn" id="ntC">Cancelar</button>'+
+    '<button class="btn dark" id="ntG" style="flex:1">Guardar nota</button></div>');
+  ovl.querySelector("#ntC").onclick=()=>ovl.remove();
+  ovl.querySelector("#ntG").onclick=()=>{
+    if(!sesiones[k]) sesiones[k]={e:{},t:{},ts:null,sync:null};
+    if(!sesiones[k].t) sesiones[k].t={};
+    const v=ovl.querySelector("#nt").value.trim();
+    if(v) sesiones[k].t[nombre]=v; else delete sesiones[k].t[nombre];
+    sesiones[k].sync=null;
+    const r=escribir(K_SES,sesiones);
+    ovl.remove(); refrescarFila(nombre); actualizarBanner();
+    if(!r.ok) mostrarRecibo(false,"No se ha podido guardar la nota: "+r.motivo);
+  };
+  setTimeout(()=>ovl.querySelector("#nt").focus(),50);
+}
+
+/* ---------- fecha ---------- */
+function abrirFecha(){
+  const ovl=hoja('<h4>Fecha del parte</h4><p class="sub">Para rellenar una clase de otro día</p>'+
+    '<input type="date" id="fx" value="'+fecha+'" max="'+iso(new Date())+'">'+
+    '<div style="margin-top:10px;display:flex;gap:8px">'+
+    '<button class="btn" id="fHoy">Hoy</button><button class="btn" id="fC">Cancelar</button>'+
+    '<button class="btn dark" id="fG" style="flex:1">Usar esta fecha</button></div>');
+  const aplicar=f=>{ fecha=f; ovl.remove(); construirLista(); pintarCabecera(); };
+  ovl.querySelector("#fC").onclick=()=>ovl.remove();
+  ovl.querySelector("#fHoy").onclick=()=>aplicar(iso(new Date()));
+  ovl.querySelector("#fG").onclick=()=>{
+    const v=ovl.querySelector("#fx").value;
+    if(v) aplicar(v); else ovl.remove();
+  };
+}
+
+/* ================= COPIA EN LA NUBE ================= */
+function pendientes(){
+  if(!config.syncUrl) return [];
+  return Object.keys(sesiones).filter(k=>sesiones[k].ts&&!sesiones[k].sync);
+}
+async function sincronizar(claves){
+  if(!config.syncUrl) return;
+  const lista=claves||pendientes();
+  if(!lista.length) return;
+  const lote=lista.slice(0,40).map(k=>{
+    const [f,id,h]=k.split("|"), c=porId(id), s=sesiones[k];
+    return {clave:k,fecha:f,hora:+h,grupo:c.grupo,materia:c.mat,cerrado:s.ts,
+      incidencias:Object.keys(s.e||{}).map(nm=>({alumno:nm,estado:NOMBRE_EST[s.e[nm]],nota:(s.t&&s.t[nm])||""}))};
+  });
+  try{
+    const res=await fetch(config.syncUrl,{method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({sesiones:lote})});
+    const data=await res.json();
+    if(!data||!data.ok) throw new Error("respuesta inesperada");
+    lote.forEach(x=>{ if(sesiones[x.clave]) sesiones[x.clave].sync=Date.now(); });
+    escribir(K_SES,sesiones);
+    if(claves && reciboBase) mostrarRecibo(true, reciboBase+" · copia en la nube ✓");
+  }catch(e){
+    if(claves) avisar("Guardado en el móvil, pero sin copia en la nube todavía");
+  }
+  actualizarAviso();
+}
+
+/* ========================= RESUMEN ========================= */
+function pintarResumen(){
+  const cont=$("#viewSum"), c=porId(claseId);
+  const meses=[...new Set(Object.keys(sesiones).filter(k=>k.split("|")[1]===claseId)
+    .map(k=>k.split("|")[0].slice(0,7)))].sort().reverse();
+  const filtro=cont.dataset.mes||"todo";
+  const tot={}, cuando={}; let nSes=0;
+  for(const k in sesiones){
+    const [f,id]=k.split("|");
+    if(id!==claseId) continue;
+    if(filtro!=="todo"&&!f.startsWith(filtro)) continue;
+    nSes++;
+    const e=sesiones[k].e||{};
+    for(const nm in e){
+      if(!tot[nm]){tot[nm]={F:0,R:0,J:0};cuando[nm]=[];}
+      tot[nm][e[nm]]++;
+      cuando[nm].push(ddmm(f)+" "+k.split("|")[2]+"ª "+e[nm]);
+    }
+  }
+  const filas=Object.entries(tot).sort((a,b)=>(b[1].F*3+b[1].R)-(a[1].F*3+a[1].R));
+  cont.innerHTML='<h2>'+esc(c.grupo)+' · '+esc(c.corto)+'</h2>'+
+    '<p class="lead">'+nSes+' sesión'+(nSes===1?"":"es")+' registrada'+(nSes===1?"":"s")+
+      ' · '+filas.length+' alumno'+(filas.length===1?"":"s")+' con incidencias</p>'+
+    '<div class="block"><h3>Periodo</h3><select id="selMes"><option value="todo">Todo el curso</option>'+
+      meses.map(m=>'<option value="'+m+'"'+(m===filtro?' selected':'')+'>'+ddmm(m)+'</option>').join("")+
+    '</select></div><div class="block">'+
+    (filas.length?'<table><tr><th>Alumno</th><th class="n">F</th><th class="n">R</th><th class="n">J</th></tr>'+
+      filas.map(([nm,v],i)=>'<tr class="alu" data-i="'+i+'"><td>'+esc(nm)+'</td><td class="n">'+(v.F||"·")+
+        '</td><td class="n">'+(v.R||"·")+'</td><td class="n">'+(v.J||"·")+'</td></tr>'+
+        '<tr class="det-fila hide" data-d="'+i+'"><td class="det" colspan="4">'+
+        esc(cuando[nm].join(" · "))+'</td></tr>').join("")+'</table>'+
+      '<p class="muted" style="margin:9px 0 0">Toca un alumno para ver las fechas.</p>'
+      :'<p class="muted">Ninguna incidencia en este periodo.</p>')+
+    '</div><div class="block"><h3>Exportar</h3>'+
+      '<button class="btn" id="expInc">Incidencias (CSV)</button>'+
+      '<button class="btn" id="expRes">Resumen por alumno (CSV)</button>'+
+      '<p class="muted">Incluye todos los grupos, no solo este.</p></div>';
+  $("#selMes").onchange=e=>{cont.dataset.mes=e.target.value;pintarResumen();};
+  cont.querySelectorAll("tr.alu").forEach(tr=>tr.onclick=()=>{
+    const d=cont.querySelector('tr[data-d="'+tr.dataset.i+'"]');
+    if(d) d.classList.toggle("hide");
+  });
+  $("#expInc").onclick=exportarIncidencias;
+  $("#expRes").onclick=()=>exportarResumen(filtro);
+}
+
+/* Safari en iPhone ignora el atributo download y abre el archivo en una pestaña.
+   Con la hoja de compartir se puede guardar en Archivos o Drive de verdad. */
+async function entregar(nombre, texto, tipo){
+  const contenido = tipo==="application/json" ? texto : "\ufeff"+texto;
+  try{
+    const f=new File([contenido], nombre, {type:tipo});
+    if(navigator.canShare && navigator.canShare({files:[f]})){
+      await navigator.share({files:[f], title:nombre});
+      return true;
+    }
+  }catch(e){ if(e && e.name==="AbortError") return false; }
+  const blob=new Blob([contenido],{type:tipo+";charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  return true;
+}
+function csv(f){return f.map(r=>r.map(x=>String(x).replace(/[;\n\r]/g," ")).join(";")).join("\r\n");}
+function exportarIncidencias(){
+  const filas=[["Fecha","Dia","Hora","Grupo","Materia","Alumno","Estado","Nota","Cerrado"]];
+  Object.keys(sesiones).sort().forEach(k=>{
+    const [f,id,h]=k.split("|"), c=porId(id), s=sesiones[k];
+    for(const nm in (s.e||{}))
+      filas.push([f,diaDe(f),h,c.grupo,c.mat,nm,NOMBRE_EST[s.e[nm]],(s.t&&s.t[nm])||"",s.ts?"sí":"no"]);
+  });
+  if(filas.length===1){ avisar("Todavía no hay incidencias que exportar"); return; }
+  entregar("incidencias_"+fecha+".csv",csv(filas),"text/csv");
+}
+function exportarResumen(filtro){
+  const tot={};
+  for(const k in sesiones){
+    const [f,id]=k.split("|");
+    if(filtro!=="todo"&&!f.startsWith(filtro)) continue;
+    const e=sesiones[k].e||{};
+    for(const nm in e){const x=id+"|"+nm; if(!tot[x])tot[x]={F:0,R:0,J:0}; tot[x][e[nm]]++;}
+  }
+  const filas=[["Grupo","Materia","Alumno","Faltas","Retrasos","Justificadas"]];
+  Object.keys(tot).sort().forEach(x=>{
+    const [id,nm]=x.split("|"), c=porId(id), v=tot[x];
+    filas.push([c.grupo,c.mat,nm,v.F,v.R,v.J]);
+  });
+  if(filas.length===1){ avisar("Todavía no hay incidencias que exportar"); return; }
+  entregar("resumen_asistencia.csv",csv(filas),"text/csv");
+}
+
+/* ========================= AJUSTES ========================= */
+function pintarAjustes(){
+  const cont=$("#viewCfg");
+  const nBack=config.ultimoBackup?new Date(config.ultimoBackup).toLocaleDateString("es-ES"):"nunca";
+  const diasSin=config.ultimoBackup?Math.floor((Date.now()-config.ultimoBackup)/86400000):999;
+  const pend=pendientes().length;
+  const sn=b=>b?'<b class="si">sí</b>':'<b class="no">no</b>';
+  const sinConexion=!(navigator.serviceWorker&&navigator.serviceWorker.controller);
+
+  cont.innerHTML=
+    (corrupto?'<div class="warnbox rojo"><b>Datos ilegibles.</b> Se ha conservado una copia intacta bajo otra clave. Restaura tu último .json antes de seguir usándola.</div>':'')+
+    (!persistente?'<div class="warnbox rojo"><b>Este navegador no está guardando nada.</b> Ábrela desde su dirección web en Safari, no desde una vista previa ni en navegación privada.</div>':'')+
+    (persistente&&!instalada()?'<div class="warnbox"><b>Añádela a la pantalla de inicio.</b> Safari borra los datos de las webs que no visitas en 7 días; las apps de la pantalla de inicio están exentas. Compartir → Añadir a pantalla de inicio.</div>':'')+
+    (diasSin>10?'<div class="warnbox">Última copia de seguridad: '+nBack+'. Descárgala y guárdala en Archivos o Drive.</div>':'')+
+    '<h2>Ajustes</h2><p class="lead">'+Object.keys(sesiones).length+' sesiones registradas</p>'+
+
+    '<div class="block"><h3>Estado del guardado</h3>'+
+      '<div class="diag"><span>Guarda en este dispositivo</span>'+sn(persistente)+'</div>'+
+      '<div class="diag"><span>Abierta desde la pantalla de inicio</span>'+sn(instalada())+'</div>'+
+      '<div class="diag"><span>Datos marcados como permanentes</span>'+(modoPersistente===null?'<b class="muted">desconocido</b>':sn(modoPersistente))+'</div>'+
+      '<div class="diag"><span>Funciona sin conexión</span>'+sn(!sinConexion)+'</div>'+
+      '<div class="diag"><span>Última escritura verificada</span><b>'+(ultimaVerif?new Date(ultimaVerif).toLocaleString("es-ES"):"—")+'</b></div>'+
+      '<button class="btn" id="probar" style="margin-top:11px">Probar el guardado ahora</button></div>'+
+
+    '<div class="block"><h3>Copia de seguridad</h3>'+
+      '<button class="btn dark" id="bkGuardar">Guardar copia (.json)</button>'+
+      '<button class="btn" id="bkCargar">Restaurar copia</button>'+
+      '<input type="file" id="bkFile" accept=".json,application/json" class="hide">'+
+      '<p class="muted">Última copia: '+nBack+'. Al guardarla se abre la hoja de compartir: elige Archivos o Drive.</p></div>'+
+
+    '<div class="block"><h3>Copia automática en la nube</h3>'+
+      '<input type="url" id="syncUrl" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(config.syncUrl||"")+'">'+
+      '<p class="muted" style="margin:9px 0">Opcional. Cada parte confirmado se copia a tu hoja de cálculo. '+(pend?'<b>'+pend+' pendientes de enviar.</b>':'')+'</p>'+
+      '<button class="btn" id="syncGuardar">Guardar dirección</button>'+
+      (config.syncUrl?'<button class="btn" id="syncAhora">Enviar pendientes ('+pend+')</button>':'')+'</div>'+
+
+    '<div class="block"><h3>Tramos horarios</h3>'+
+      HORAS.map(h=>'<div class="grid5"><div class="muted">'+h+'ª</div><input type="time" data-ini="'+(h-1)+'" value="'+config.inicios[h-1]+'"></div>').join("")+
+      '<div class="grid5"><div class="muted">fin</div><input type="time" id="finClase" value="'+config.fin+'"></div></div>'+
+
+    '<h3 style="margin:18px 0 6px">Horario semanal</h3>'+
+    '<p class="muted" style="margin-bottom:10px">Rellénalo y la app se abrirá sola en la clase que toca. Ojo: 2ºC aparece dos veces, una por asignatura.</p>'+
+    DIAS.map((d,di)=>'<div class="block"><h3>'+d+'</h3>'+
+      HORAS.map(h=>{
+        const sel=config.horario[di+"-"+h]||"";
+        return '<div class="grid5"><div class="muted">'+h+'ª</div><select data-dh="'+di+'-'+h+'">'+
+          '<option value="">—</option>'+
+          CLASES.map(c=>'<option value="'+c.id+'"'+(sel===c.id?' selected':'')+'>'+c.grupo+' · '+c.corto+'</option>').join("")+
+          '</select></div>';
+      }).join("")+'</div>').join("")+
+
+    '<div class="block"><h3>Borrar</h3><button class="btn warn" id="borrar">Borrar todos los registros</button></div>'+
+    '<div class="block"><h3>Versión '+VERSION+'</h3>'+
+      '<button class="btn" id="buscarAct">Buscar actualización</button>'+
+      (hayActualizacion?'<p class="muted">Versión nueva descargada: cierra la app del todo y vuelve a abrirla.</p>':'')+
+      '<p class="muted">Actualizar no toca tus registros.</p></div>';
+
+  cont.querySelectorAll("select[data-dh]").forEach(s=>s.onchange=e=>{
+    const dh=e.target.dataset.dh;
+    if(e.target.value) config.horario[dh]=e.target.value; else delete config.horario[dh];
+    escribir(K_CFG,config); avisar("Horario actualizado");
+  });
+  cont.querySelectorAll("input[data-ini]").forEach(i=>i.onchange=e=>{
+    config.inicios[+e.target.dataset.ini]=e.target.value; escribir(K_CFG,config);
+  });
+  $("#finClase").onchange=e=>{config.fin=e.target.value;escribir(K_CFG,config);};
+  $("#probar").onclick=()=>{
+    const t="prueba_"+Date.now();
+    const r=escribir("asist2627_prueba",t);
+    let leido=null; try{ leido=JSON.parse(localStorage.getItem("asist2627_prueba")); }catch(e){}
+    try{ localStorage.removeItem("asist2627_prueba"); }catch(e){}
+    avisar(r.ok&&leido===t ? "Correcto: escrito y releído del dispositivo"
+                           : "Fallo: "+(r.motivo||"no se pudo releer el dato"));
+    pintarAjustes();
+  };
+  $("#bkGuardar").onclick=async()=>{
+    const ok=await entregar("copia_asistencia_"+fecha+".json",
+      JSON.stringify({version:VERSION,sesiones,config},null,1),"application/json");
+    if(ok){ config.ultimoBackup=Date.now(); escribir(K_CFG,config); avisar("Copia generada"); pintarAjustes(); }
+  };
+  $("#bkCargar").onclick=()=>$("#bkFile").click();
+  $("#bkFile").onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const d=JSON.parse(r.result);
+        if(!d.sesiones||typeof d.sesiones!=="object") throw 0;
+        const antes=Object.keys(sesiones).length;
+        sesiones=Object.assign({},sesiones,d.sesiones);
+        if(d.config) config=Object.assign(config,d.config);
+        escribir(K_SES,sesiones); escribir(K_CFG,config);
+        corrupto=false;
+        avisar("Restaurado: "+(Object.keys(sesiones).length-antes)+" sesiones nuevas");
+        pintarAjustes();
+      }catch(err){ avisar("Ese archivo no es una copia válida"); }
+    };
+    r.readAsText(f);
+  };
+  $("#syncGuardar").onclick=()=>{
+    const v=$("#syncUrl").value.trim();
+    if(v && !/^https:\/\//.test(v)){ avisar("La dirección debe empezar por https://"); return; }
+    config.syncUrl=v; escribir(K_CFG,config);
+    avisar(v?"Dirección guardada":"Copia en la nube desactivada"); pintarAjustes();
+  };
+  if($("#syncAhora")) $("#syncAhora").onclick=async()=>{ avisar("Enviando…"); await sincronizar(); pintarAjustes(); };
+  $("#borrar").onclick=()=>{
+    if(confirm("¿Borrar TODOS los registros de asistencia? Descarga antes una copia.")){
+      sesiones={}; escribir(K_SES,sesiones); avisar("Registros borrados"); pintarAjustes();
+    }
+  };
+  $("#buscarAct").onclick=async()=>{
+    if(!regSW){ avisar("Sin service worker activo"); return; }
+    avisar("Buscando…");
+    try{ await regSW.update(); avisar(hayActualizacion?"Versión nueva lista":"Ya tienes la última versión"); }
+    catch(e){ avisar("No se pudo comprobar. ¿Estás sin conexión?"); }
+  };
+}
+
+/* ========================= NAVEGACIÓN ========================= */
+function actualizarAviso(){
+  const hay = corrupto || !!fallo || !persistente || !instalada() ||
+              pendientes().length>0 || hayActualizacion;
+  $("#dotCfg").classList.toggle("hide",!hay);
+}
+function pintar(){
+  pintarCabecera();
+  $("#picker").classList.toggle("hide", vista!=="lista" || !pickerAbierto);
+  $("#bar").classList.toggle("hide",vista!=="lista");
+  $("#viewLista").classList.toggle("hide",vista!=="lista");
+  $("#viewSum").classList.toggle("hide",vista!=="sum");
+  $("#viewCfg").classList.toggle("hide",vista!=="cfg");
+  document.body.style.paddingBottom = vista==="lista" ? "" : "28px";
+  if(vista==="lista"){ pintarChips(); construirLista(); }
+  if(vista==="sum") pintarResumen();
+  if(vista==="cfg") pintarAjustes();
+  actualizarAviso();
+  window.scrollTo(0,0);
+}
+function recordar(){escribir(K_ULT,{c:claseId,h:hora});}
+
+$("#ctxBig").onclick=()=>{ if(vista!=="lista") return; pickerAbierto=!pickerAbierto;
+  $("#picker").classList.toggle("hide",!pickerAbierto); pintarCabecera(); };
+$("#ctxSmall").onclick=()=>{ if(vista==="lista") abrirFecha(); };
+$("#btnSum").onclick=()=>{vista="sum";pintar();};
+$("#btnCfg").onclick=()=>{vista="cfg";pintar();};
+$("#btnBack").onclick=()=>{vista="lista";pintar();};
+
+let tOut;
+function avisar(txt){
+  const t=$("#toast"); t.textContent=txt; t.classList.add("on");
+  clearTimeout(tOut); tOut=setTimeout(()=>t.classList.remove("on"),2400);
+}
+
+/* Un toque que empieza como arrastre es scroll, no una falta. */
+let movido=false, y0=0;
+document.addEventListener("touchstart",e=>{movido=false;y0=e.touches[0].clientY;},{passive:true});
+document.addEventListener("touchmove",e=>{
+  if(Math.abs(e.touches[0].clientY-y0)>8) movido=true;
+},{passive:true});
+
+/* Al volver a la app: actualiza el día y, si no había nada marcado, la clase que toca. */
+let salida=Date.now();
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){ salida=Date.now(); return; }
+  const nuevaFecha=iso(new Date());
+  if(vista==="lista" && Date.now()-salida>25*60*1000){
+    const s=ses(), vacia=!s||Object.keys(s.e||{}).length===0;
+    if(vacia){ fecha=nuevaFecha; autoSeleccionar(); pintar(); }
+  }
+  if(config.syncUrl) sincronizar();
+});
+
+/* ================= SIN CONEXIÓN ================= */
+let regSW=null, hayActualizacion=false;
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").then(r=>{
+      regSW=r;
+      r.addEventListener("updatefound",()=>{
+        const nuevo=r.installing; if(!nuevo) return;
+        nuevo.addEventListener("statechange",()=>{
+          if(nuevo.state==="installed"&&navigator.serviceWorker.controller){
+            hayActualizacion=true; actualizarAviso();
+            avisar("Hay una versión nueva. Ciérrala y ábrela otra vez.");
+          }
+        });
+      });
+    }).catch(()=>{});
+  });
+}
+
+autoSeleccionar();
+pintar();
+pedirPersistencia();
+if(config.syncUrl) sincronizar();
+</script>
+</body>
+</html>
