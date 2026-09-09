@@ -1,7 +1,7 @@
 /* Service worker de Lista.
    El número de abajo DEBE coincidir con el VERSION de index.html.
    Es el único número que hay que tocar al publicar una versión nueva. */
-const VERSION = "1.5";
+const VERSION = "1.6";
 const CACHE   = "lista-" + VERSION;
 const ESTATICOS = ["./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 

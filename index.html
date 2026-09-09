@@ -78,6 +78,15 @@ header{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;
 .chipL[aria-pressed="true"]{background:var(--ink);color:#fff}
 .chipL small{display:block;font-size:10.5px;font-weight:500;opacity:.72;margin-top:2px}
 .pend{color:#e8a33d;font-weight:600}
+.aluRow{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line-2)}
+.aluRow:last-of-type{border-bottom:0}
+.aluN{flex:0 0 22px;font-size:12px;color:var(--ink-3)}
+.aluNom{flex:1;min-width:0;text-align:left;background:none;border:0;padding:11px 0;
+  font-size:14.5px;cursor:pointer;color:var(--ink);line-height:1.3}
+.aluNom em{font-style:normal;font-size:12px;color:var(--ink-3)}
+.aluRow.baja .aluNom{color:var(--ink-3)}
+.aluAcc{flex:0 0 auto;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);
+  background:#fff;cursor:pointer;color:var(--ink-2);font-size:15px;line-height:1}
 
 /* ---------- avisos ---------- */
 .banner{margin:10px 10px 0;padding:10px 12px;border-radius:11px;font-size:13.5px;line-height:1.4;
@@ -211,7 +220,10 @@ select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--
 "use strict";
 
 /* ========================= DATOS ========================= */
-const ALUMNOS = {"1ºD": ["Almela Martínez, Ignacio", "Altemir Seller, Jordi", "Cova Trijillo, Diego Alejandro", "Díaz Vaquerizo, José", "Gallego Guillén, Javier", "García Pérez, Juan Pablo", "Gavira Castillo, David", "Gordo Sánchez de las Matas, Mateo", "Mejía López, Jonathan Moisés", "Villarrubia Moreno, Héctor", "Villavicencio López, Jonathan"], "2ºB": ["Acito Muñoz, Fabio", "Avilés Tassi, José Joaquín", "Cernea, Lucas Florín", "Chen Chen, Fengkai", "Chen Zhu, Wenhao", "Del Castillo, Gabriel Alejandro", "Eiras Gil, Saúl", "Elorza Delgado, Darío", "Hortigón Morán, Pablo", "Llana Vázquez, Luis", "Montoro Díaz, Álvaro", "Mora Rodríguez, David", "Rivera Luna, José Luis", "Rodríguez Galindo, José María", "Sanmartín Saavedra, Álvaro Guillermo", "Sovago Crisan, Alexandru", "Zamorano Vazquez, Mario Ronald"], "2ºC": ["Agudo Ares, Sergio", "Alcalde Berrendo, José Ignacio", "Asenjo Benavides, José Carlos", "Azapwah Nkeng, Gislain", "Benalcázar Torres, Mauricio", "Bravo Fernández, Carlos", "Buján Vicente, Álvaro", "Buna Sitoka, Alexander", "Cano Aliaga, Joseph Anthony", "Cuellar Hutupas, Jorge Gabriel", "De Pablo Sanz, Beltrán", "De Santiago Berrocal, Raúl", "De Torres Caraballo, Pablo", "Diamantis Contreras, Nestor Basil", "Flores Ramírez, Rodolfo Joaquín", "García Nieto, Miguel", "Hermoso Menéndez, Pablo", "Mera Cuesta, Ramsés", "Montesino Rodríguez, David", "Paja Álvarez, Gonzalo", "Pasán Díaz, Gabriel", "Pavón Mancheño, Nicolás", "Prado Perea, Pablo", "Rojas Fernández, Antonio", "Romero García, Juan", "Segovia Hernández, Moisés", "Solá Sánchez, Pablo", "Tendero Jiménez, Carlos", "Torres Betancur, Julián Mateo", "Vasquez Cabello, Massimo Octavio"], "2ºD": ["Aparicio Blazquez, Luis", "Fuertes García, Daniel", "González del Campo Alonso, Jesús Enrique", "González García, Santiago", "Lema Ávila, Aarón Alejandro", "López Rocamora, Rodrigo", "Martínez Escandon, José María", "Mendoza Pujalt, Jorge Augusto", "Ramírez Ferreira, Mateo", "Santamaría Torres, Daniel", "Santana Llanes, Samuel David", "Valverde León, Antonio"], "2ºA": ["Álvarez Pinto, Jesús Daniel", "Aponte Díaz, Thobias Manuel", "Caluseru, Cristian", "Centellas Solares, Rene Kaleb", "Collado Díaz, Juan", "de la Fuente Auquillas, Darío Miguel", "Dopico Martínez, Luca", "Garcia Florea, Diego", "Garcia Maciel, Alejandro Miguel", "García Palacios, Daniel", "Gavira Castillo, Alejandro", "Herranz Toril, Ángel Luis", "Jiménez Coello, Guillermo", "Martín Algaba, Víctor", "Martín Hurtado, Eloy", "Miranda Blazquez, Joel", "Moratiel Sánchez, Ángel", "Moreta Santander, Adrián Guillermo", "Naranjo El Rezz, Nicolás", "Niebla Ruiz de Pascual, Ismael", "Otamendi Roa, Jacob de Jesús", "Poliwani Castillejos, Eizan", "Ramos Castillo, Raúl", "She, Zewei", "Silva Rodríguez, Carlos Xavier", "Suárez Torrealba, Diego Ismael"]};
+/* Listas iniciales, por asignatura (no por grupo): 2ºC tiene una lista para
+   Historia de España y otra para Historia del Arte, que pueden diferir.
+   Esto solo se usa la PRIMERA vez. A partir de ahí mandan tus ediciones. */
+const LISTAS_DEF = {"1D-HMC": [{"n": "Almela Martínez, Ignacio"}, {"n": "Altemir Seller, Jordi"}, {"n": "Cova Trijillo, Diego Alejandro"}, {"n": "Díaz Vaquerizo, José"}, {"n": "Gallego Guillén, Javier"}, {"n": "García Pérez, Juan Pablo"}, {"n": "Gavira Castillo, David"}, {"n": "Gordo Sánchez de las Matas, Mateo"}, {"n": "Mejía López, Jonathan Moisés"}, {"n": "Villarrubia Moreno, Héctor"}, {"n": "Villavicencio López, Jonathan"}], "2B-HE": [{"n": "Acito Muñoz, Fabio"}, {"n": "Avilés Tassi, José Joaquín"}, {"n": "Cernea, Lucas Florín"}, {"n": "Chen Chen, Fengkai"}, {"n": "Chen Zhu, Wenhao"}, {"n": "Del Castillo, Gabriel Alejandro"}, {"n": "Eiras Gil, Saúl"}, {"n": "Elorza Delgado, Darío"}, {"n": "Hortigón Morán, Pablo"}, {"n": "Llana Vázquez, Luis"}, {"n": "Montoro Díaz, Álvaro"}, {"n": "Mora Rodríguez, David"}, {"n": "Rivera Luna, José Luis"}, {"n": "Rodríguez Galindo, José María"}, {"n": "Sanmartín Saavedra, Álvaro Guillermo"}, {"n": "Sovago Crisan, Alexandru"}, {"n": "Zamorano Vazquez, Mario Ronald"}], "2C-HE": [{"n": "Agudo Ares, Sergio"}, {"n": "Alcalde Berrendo, José Ignacio"}, {"n": "Asenjo Benavides, José Carlos"}, {"n": "Azapwah Nkeng, Gislain"}, {"n": "Benalcázar Torres, Mauricio"}, {"n": "Bravo Fernández, Carlos"}, {"n": "Buján Vicente, Álvaro"}, {"n": "Buna Sitoka, Alexander"}, {"n": "Cano Aliaga, Joseph Anthony"}, {"n": "Cuellar Hutupas, Jorge Gabriel"}, {"n": "De Pablo Sanz, Beltrán"}, {"n": "De Santiago Berrocal, Raúl"}, {"n": "De Torres Caraballo, Pablo"}, {"n": "Diamantis Contreras, Nestor Basil"}, {"n": "Flores Ramírez, Rodolfo Joaquín", "baja": "2026-09-09"}, {"n": "Hermoso Menéndez, Pablo"}, {"n": "Mera Cuesta, Ramsés"}, {"n": "Montesino Rodríguez, David"}, {"n": "Paja Álvarez, Gonzalo"}, {"n": "Pasán Díaz, Gabriel"}, {"n": "Pavón Mancheño, Nicolás", "baja": "2026-09-09"}, {"n": "Prado Perea, Pablo"}, {"n": "Rojas Fernández, Antonio"}, {"n": "Romero García, Juan"}, {"n": "Segovia Hernández, Moisés"}, {"n": "Solá Sánchez, Pablo"}, {"n": "Tendero Jiménez, Carlos"}, {"n": "Torres Betancur, Julián Mateo"}, {"n": "Vasquez Cabello, Massimo Octavio"}], "2C-HA": [{"n": "Agudo Ares, Sergio"}, {"n": "Alcalde Berrendo, José Ignacio"}, {"n": "Asenjo Benavides, José Carlos"}, {"n": "Azapwah Nkeng, Gislain"}, {"n": "Benalcázar Torres, Mauricio"}, {"n": "Bravo Fernández, Carlos"}, {"n": "Buján Vicente, Álvaro"}, {"n": "Buna Sitoka, Alexander"}, {"n": "Cano Aliaga, Joseph Anthony"}, {"n": "Cuellar Hutupas, Jorge Gabriel"}, {"n": "De Pablo Sanz, Beltrán"}, {"n": "De Santiago Berrocal, Raúl"}, {"n": "De Torres Caraballo, Pablo"}, {"n": "Diamantis Contreras, Nestor Basil"}, {"n": "Flores Ramírez, Rodolfo Joaquín", "baja": "2026-09-09"}, {"n": "García Nieto, Miguel"}, {"n": "Hermoso Menéndez, Pablo"}, {"n": "Mera Cuesta, Ramsés"}, {"n": "Montesino Rodríguez, David"}, {"n": "Paja Álvarez, Gonzalo"}, {"n": "Pasán Díaz, Gabriel"}, {"n": "Pavón Mancheño, Nicolás", "baja": "2026-09-09"}, {"n": "Prado Perea, Pablo"}, {"n": "Rojas Fernández, Antonio"}, {"n": "Romero García, Juan"}, {"n": "Segovia Hernández, Moisés"}, {"n": "Solá Sánchez, Pablo"}, {"n": "Tendero Jiménez, Carlos"}, {"n": "Torres Betancur, Julián Mateo"}, {"n": "Vasquez Cabello, Massimo Octavio"}], "2D-HA": [{"n": "Aparicio Blazquez, Luis"}, {"n": "Fuertes García, Daniel"}, {"n": "González del Campo Alonso, Jesús Enrique"}, {"n": "González García, Santiago"}, {"n": "Lema Ávila, Aarón Alejandro"}, {"n": "López Rocamora, Rodrigo"}, {"n": "Martínez Escandon, José María"}, {"n": "Mendoza Pujalt, Jorge Augusto"}, {"n": "Ramírez Ferreira, Mateo"}, {"n": "Santamaría Torres, Daniel"}, {"n": "Santana Llanes, Samuel David"}, {"n": "Valverde León, Antonio"}], "2A-GEH": [{"n": "Álvarez Pinto, Jesús Daniel"}, {"n": "Aponte Díaz, Thobias Manuel"}, {"n": "Caluseru, Cristian"}, {"n": "Centellas Solares, Rene Kaleb"}, {"n": "Collado Díaz, Juan"}, {"n": "de la Fuente Auquillas, Darío Miguel"}, {"n": "Dopico Martínez, Luca"}, {"n": "Garcia Florea, Diego"}, {"n": "Garcia Maciel, Alejandro Miguel"}, {"n": "García Palacios, Daniel"}, {"n": "Gavira Castillo, Alejandro"}, {"n": "Herranz Toril, Ángel Luis"}, {"n": "Jiménez Coello, Guillermo"}, {"n": "Martín Algaba, Víctor"}, {"n": "Martín Hurtado, Eloy"}, {"n": "Miranda Blazquez, Joel"}, {"n": "Moratiel Sánchez, Ángel"}, {"n": "Moreta Santander, Adrián Guillermo"}, {"n": "Naranjo El Rezz, Nicolás"}, {"n": "Niebla Ruiz de Pascual, Ismael"}, {"n": "Otamendi Roa, Jacob de Jesús"}, {"n": "Poliwani Castillejos, Eizan"}, {"n": "Ramos Castillo, Raúl"}, {"n": "She, Zewei"}, {"n": "Silva Rodríguez, Carlos Xavier"}, {"n": "Suárez Torrealba, Diego Ismael"}]};
 
 const CLASES = [
   {id:"1D-HMC", grupo:"1ºD", mat:"Historia del Mundo Contemporáneo", corto:"H.ª Mundo Cont."},
@@ -227,13 +239,14 @@ const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes"];
 const CICLO={P:"F",F:"R",R:"J",J:"P"};
 const ICONO={P:"",F:"F",R:"R",J:"J"};
 const NOMBRE_EST={F:"falta",R:"retraso",J:"justificada"};
-const VERSION="1.5";   // debe coincidir con el VERSION de sw.js
+const VERSION="1.6";   // debe coincidir con el VERSION de sw.js
 
 /* ================= ALMACENAMIENTO VERIFICADO ================= */
 let persistente=true, modoPersistente=null, ultimaVerif=null, fallo=null, corrupto=false;
 try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }catch(e){ persistente=false; }
 
-const K_SES="asist2627_sesiones", K_CFG="asist2627_config", K_ULT="asist2627_ultimo";
+const K_SES="asist2627_sesiones", K_CFG="asist2627_config", K_ULT="asist2627_ultimo",
+      K_LIS="asist2627_listas";
 
 function crudo(k){ try{ return persistente ? localStorage.getItem(k) : null; }catch(e){ return null; } }
 
@@ -278,6 +291,16 @@ function escribir(k,v){
 
 let sesiones = leerObjeto(K_SES, {});
 
+/* Se siembran una sola vez. Nunca se pisan desde el código: si algún día
+   cambio la app, tus altas, bajas y correcciones siguen intactas. */
+let listas = leerObjeto(K_LIS, null);
+if(!listas || !listas.l) listas = {v:1, l:JSON.parse(JSON.stringify(LISTAS_DEF))};
+function guardarListas(){
+  const r=escribir(K_LIS,listas);
+  if(!r.ok) avisar("No se han podido guardar las listas: "+r.motivo);
+  return r.ok;
+}
+
 /* Horario de Tajamar 26-27 ya cargado. Si lo cambias a mano, tus cambios mandan:
    solo se reescribe cuando sube CFG_VERSION. */
 const CFG_VERSION = 3;
@@ -318,7 +341,34 @@ const filas = new Map();
 function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function clave(){return fecha+"|"+claseId+"|"+hora;}
 function ses(){return sesiones[clave()]||null;}
-function alumnos(){return ALUMNOS[porId(claseId).grupo]||[];}
+/* Un alumno aparece solo en las fechas en las que estaba en clase: si se da
+   de baja hoy, sigue saliendo si consultas un parte de la semana pasada. */
+function alumnos(){
+  return (listas.l[claseId]||[]).filter(a =>
+    (!a.alta || fecha >= a.alta) && (!a.baja || fecha < a.baja));
+}
+function nRegistros(id,nombre){
+  let n=0;
+  for(const k in sesiones){
+    if(k.split("|")[1]!==id) continue;
+    if((sesiones[k].e||{})[nombre]!==undefined) n++;
+  }
+  return n;
+}
+/* Al corregir un nombre hay que arrastrar sus registros, que van indexados
+   por nombre. Se hace en una pasada y se informa de cuántos se han movido. */
+function renombrar(id,viejo,nuevo){
+  let n=0;
+  for(const k in sesiones){
+    if(k.split("|")[1]!==id) continue;
+    const s=sesiones[k];
+    if(s.e && s.e[viejo]!==undefined){ s.e[nuevo]=s.e[viejo]; delete s.e[viejo]; s.sync=null; n++; }
+    if(s.t && s.t[viejo]!==undefined){ s.t[nuevo]=s.t[viejo]; delete s.t[viejo]; }
+  }
+  if(n) escribir(K_SES,sesiones);
+  return n;
+}
+const limpiarNombre = s => String(s).replace(/\s+/g," ").replace(/\s+,/g,",").trim();
 function esHoy(){return fecha===iso(new Date());}
 function ddmm(f){return f.split("-").reverse().join("/");}
 function diaDe(f){return DIAS[(new Date(f+"T12:00")).getDay()-1]||"Fin de semana";}
@@ -410,14 +460,15 @@ function acumulado(nombre){
    Repintar las 30 filas en cada toque hacía saltar el scroll en iOS. */
 function construirLista(){
   const cont=$("#list"); cont.innerHTML=""; filas.clear();
-  if(alumnos().length===0){
-    cont.innerHTML='<div class="banner">Todavía no está cargada la lista de alumnos de '+
-      esc(porId(claseId).grupo)+'. No se puede pasar lista en este grupo.</div>';
+  const lista=alumnos();
+  if(lista.length===0){
+    cont.innerHTML='<div class="banner">No hay alumnos en '+esc(porId(claseId).grupo)+
+      ' · '+esc(porId(claseId).corto)+'. Añádelos en Ajustes → Listas de alumnos.</div>';
     pintarTally(); actualizarBanner(); return;
   }
   const frag=document.createDocumentFragment();
-  alumnos().forEach((nombre,i)=>{
-    const p=nombre.split(",");
+  lista.forEach((al,i)=>{
+    const nombre=al.n, p=nombre.split(",");
     const row=document.createElement("div");
     row.className="row"; row.tabIndex=0; row.setAttribute("role","button");
     row.innerHTML='<div class="num">'+(i+1)+'</div>'+
@@ -433,7 +484,7 @@ function construirLista(){
     frag.appendChild(row);
   });
   cont.appendChild(frag);
-  alumnos().forEach(refrescarFila);
+  lista.forEach(a=>refrescarFila(a.n));
   pintarTally(); actualizarBanner();
 }
 function refrescarFila(nombre){
@@ -761,6 +812,7 @@ function pintarAjustes(){
       '<button class="btn" id="syncGuardar">Guardar dirección</button>'+
       (config.syncUrl?'<button class="btn" id="syncAhora">Enviar pendientes ('+pend+')</button>':'')+'</div>'+
 
+    '<div class="block"><h3>Listas de alumnos</h3><div id="edAlum"></div></div>'+
     '<div class="block"><h3>Tramos horarios</h3>'+
       '<div class="grid7"><div></div><div class="muted">empieza</div><div class="muted">acaba</div></div>'+
       HORAS.map(h=>'<div class="grid7"><div class="muted">'+h+'ª</div>'+
@@ -783,14 +835,18 @@ function pintarAjustes(){
       '<div class="diag"><span>App</span><b>'+VERSION+'</b></div>'+
       '<div class="diag"><span>Caché instalada</span><b'+
         (versionSW&&versionSW!==VERSION?' class="no"':'')+'>'+(versionSW||"comprobando…")+'</b></div>'+
-      (versionSW&&versionSW!==VERSION
+      (versionSW&&versionSW!==VERSION&&/^[0-9.]+$/.test(versionSW)
         ? '<p class="muted">No coinciden: se está sirviendo una copia antigua. Pulsa Forzar actualización.</p>'
+        : '')+
+      (versionSW&&!/^[0-9.]+$/.test(versionSW)
+        ? '<p class="muted">La caché aún no ha tomado el control de esta pestaña. Recarga la página; es normal la primera vez que la abres en un dispositivo.</p>'
         : '')+
       (hayActualizacion?'<p class="muted">Hay una versión nueva lista; se aplicará al reabrir.</p>':'')+
       '<button class="btn" id="buscarAct" style="margin-top:10px">Buscar actualización</button>'+
       '<button class="btn warn" id="forzarAct">Forzar actualización</button>'+
       '<p class="muted">Ninguna de las dos toca tus registros.</p></div>';
 
+  pintarAlumnos();
   cont.querySelectorAll("select[data-dh]").forEach(s=>s.onchange=e=>{
     const dh=e.target.dataset.dh;
     if(e.target.value) config.horario[dh]=e.target.value; else delete config.horario[dh];
@@ -813,7 +869,7 @@ function pintarAjustes(){
   };
   $("#bkGuardar").onclick=async()=>{
     const ok=await entregar("copia_asistencia_"+fecha+".json",
-      JSON.stringify({version:VERSION,sesiones,config},null,1),"application/json");
+      JSON.stringify({version:VERSION,sesiones,config,listas},null,1),"application/json");
     if(ok){ config.ultimoBackup=Date.now(); escribir(K_CFG,config); avisar("Copia generada"); pintarAjustes(); }
   };
   $("#bkCargar").onclick=()=>$("#bkFile").click();
@@ -827,7 +883,8 @@ function pintarAjustes(){
         const antes=Object.keys(sesiones).length;
         sesiones=Object.assign({},sesiones,d.sesiones);
         if(d.config) config=Object.assign(config,d.config);
-        escribir(K_SES,sesiones); escribir(K_CFG,config);
+        if(d.listas && d.listas.l) listas=d.listas;
+        escribir(K_SES,sesiones); escribir(K_CFG,config); escribir(K_LIS,listas);
         corrupto=false;
         avisar("Restaurado: "+(Object.keys(sesiones).length-antes)+" sesiones nuevas");
         pintarAjustes();
@@ -862,11 +919,104 @@ function pintarAjustes(){
   $("#forzarAct").onclick=forzarActualizacion;
 }
 
+/* ---------------- editor de listas ---------------- */
+let edClase=null;
+function pintarAlumnos(){
+  const c=$("#edAlum"); if(!c) return;
+  if(!edClase || !CLASES.some(x=>x.id===edClase)) edClase=claseId;
+  const l=listas.l[edClase]||[];
+  const act=l.filter(a=>!a.baja), baj=l.filter(a=>a.baja);
+  const fila=(a,num)=>'<div class="aluRow'+(a.baja?" baja":"")+'">'+
+    '<span class="aluN">'+(num?num:"")+'</span>'+
+    '<button class="aluNom" data-ed="'+esc(a.n)+'">'+esc(a.n)+
+      (a.baja?' <em>· baja '+ddmm(a.baja)+'</em>':'')+
+      (a.alta?' <em>· alta '+ddmm(a.alta)+'</em>':'')+'</button>'+
+    '<button class="aluAcc" data-'+(a.baja?"alta":"baja")+'="'+esc(a.n)+'" '+
+      'aria-label="'+(a.baja?"Reactivar":"Dar de baja")+'">'+(a.baja?"↺":"×")+'</button></div>';
+
+  c.innerHTML='<select id="edSel">'+
+      CLASES.map(x=>'<option value="'+x.id+'"'+(x.id===edClase?" selected":"")+'>'+
+        esc(x.grupo)+' · '+esc(x.corto)+'</option>').join("")+'</select>'+
+    '<p class="muted" style="margin:10px 0 4px">'+act.length+' en clase'+
+      (baj.length?' · '+baj.length+' de baja':'')+'</p>'+
+    act.map((a,i)=>fila(a,i+1)).join("")+
+    (baj.length?'<p class="muted" style="margin:14px 0 4px">De baja · sus registros se conservan</p>'+
+      baj.map(a=>fila(a,null)).join(""):'')+
+    '<button class="btn dark" id="edAdd" style="width:100%;margin-top:12px">Añadir alumno</button>';
+
+  $("#edSel").onchange=e=>{ edClase=e.target.value; pintarAlumnos(); };
+  c.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>editarAlumno(b.dataset.ed));
+  c.querySelectorAll("[data-baja]").forEach(b=>b.onclick=()=>cambiarEstado(b.dataset.baja,true));
+  c.querySelectorAll("[data-alta]").forEach(b=>b.onclick=()=>cambiarEstado(b.dataset.alta,false));
+  $("#edAdd").onclick=anadirAlumno;
+}
+function trasEditar(){
+  guardarListas(); pintarAlumnos();
+  if(edClase===claseId && vista==="lista") construirLista();
+}
+function cambiarEstado(nombre,dandoBaja){
+  const a=(listas.l[edClase]||[]).find(x=>x.n===nombre); if(!a) return;
+  if(dandoBaja){
+    if(!confirm(nombre+"\n\nDejará de aparecer al pasar lista a partir de hoy.\nSus faltas anteriores se conservan. ¿Continuar?")) return;
+    a.baja=iso(new Date());
+  }else{ delete a.baja; }
+  trasEditar();
+  avisar(dandoBaja?"Dado de baja":"Reactivado");
+}
+function editarAlumno(viejo){
+  const arr=listas.l[edClase]||[], a=arr.find(x=>x.n===viejo); if(!a) return;
+  const n=nRegistros(edClase,viejo);
+  const ovl=hoja('<h4>Editar alumno</h4><p class="sub">'+esc(porId(edClase).grupo)+' · '+
+      esc(porId(edClase).corto)+'</p>'+
+    '<input type="text" id="eaN" value="'+esc(viejo)+'" placeholder="Apellidos, Nombre">'+
+    '<p class="muted" style="margin:9px 0 0">'+(n?n+" sesión"+(n===1?"":"es")+" con incidencia registrada":"Sin incidencias registradas")+'</p>'+
+    '<div style="margin-top:12px;display:flex;gap:8px">'+
+      '<button class="btn" id="eaC">Cancelar</button>'+
+      '<button class="btn dark" id="eaG" style="flex:1">Guardar</button></div>'+
+    (n?'':'<button class="btn warn" id="eaDel" style="width:100%;margin-top:10px">Eliminar definitivamente</button>'));
+  ovl.querySelector("#eaC").onclick=()=>ovl.remove();
+  ovl.querySelector("#eaG").onclick=()=>{
+    const nuevo=limpiarNombre(ovl.querySelector("#eaN").value);
+    if(!nuevo){ avisar("El nombre no puede quedar vacío"); return; }
+    if(nuevo===viejo){ ovl.remove(); return; }
+    if(arr.some(x=>x.n===nuevo)){ avisar("Ya hay un alumno con ese nombre en esta clase"); return; }
+    const movidos=renombrar(edClase,viejo,nuevo);
+    a.n=nuevo; ovl.remove(); trasEditar();
+    avisar(movidos?"Corregido · "+movidos+" registros actualizados":"Corregido");
+  };
+  const del=ovl.querySelector("#eaDel");
+  if(del) del.onclick=()=>{
+    if(!confirm("Eliminar a "+viejo+" de esta lista. No tiene registros, así que no se pierde nada. ¿Seguro?")) return;
+    arr.splice(arr.indexOf(a),1); ovl.remove(); trasEditar(); avisar("Eliminado");
+  };
+  setTimeout(()=>ovl.querySelector("#eaN").focus(),50);
+}
+function anadirAlumno(){
+  const arr=listas.l[edClase]||(listas.l[edClase]=[]);
+  const ovl=hoja('<h4>Añadir alumno</h4><p class="sub">'+esc(porId(edClase).grupo)+' · '+
+      esc(porId(edClase).corto)+'</p>'+
+    '<input type="text" id="aaN" placeholder="Apellidos, Nombre">'+
+    '<p class="muted" style="margin:9px 0 0">Solo aparecerá en los partes de hoy en adelante.</p>'+
+    '<div style="margin-top:12px;display:flex;gap:8px">'+
+      '<button class="btn" id="aaC">Cancelar</button>'+
+      '<button class="btn dark" id="aaG" style="flex:1">Añadir</button></div>');
+  ovl.querySelector("#aaC").onclick=()=>ovl.remove();
+  ovl.querySelector("#aaG").onclick=()=>{
+    const nom=limpiarNombre(ovl.querySelector("#aaN").value);
+    if(!nom){ avisar("Escribe el nombre"); return; }
+    if(arr.some(x=>x.n===nom)){ avisar("Ya está en esta lista"); return; }
+    arr.push({n:nom, alta:iso(new Date())});
+    arr.sort((x,y)=>x.n.localeCompare(y.n,"es"));
+    ovl.remove(); trasEditar(); avisar("Añadido");
+  };
+  setTimeout(()=>ovl.querySelector("#aaN").focus(),50);
+}
+
 /* ========================= NAVEGACIÓN ========================= */
 function actualizarAviso(){
   const hay = corrupto || !!fallo || !persistente || !instalada() ||
               pendientes().length>0 || hayActualizacion ||
-              (versionSW && versionSW!==VERSION);
+              (versionSW && /^[0-9.]+$/.test(versionSW) && versionSW!==VERSION);
   $("#dotCfg").classList.toggle("hide",!hay);
 }
 function pintar(){
@@ -965,10 +1115,25 @@ if("serviceWorker" in navigator){
     }).catch(()=>{});
   });
 }
-function preguntarSW(){
-  if(navigator.serviceWorker && navigator.serviceWorker.controller)
+/* La primera vez que se visita la página, el service worker se registra pero
+   todavía no la controla, así que no hay nadie a quien preguntar. Antes eso
+   dejaba "comprobando…" para siempre. */
+async function preguntarSW(){
+  if(!("serviceWorker" in navigator)){
+    versionSW="no compatible"; if(vista==="cfg") pintarAjustes(); return;
+  }
+  try{ await Promise.race([navigator.serviceWorker.ready, espera(4000)]); }catch(e){}
+  if(navigator.serviceWorker.controller){
     navigator.serviceWorker.controller.postMessage("version");
+    setTimeout(()=>{                       // si no contesta, no se queda colgado
+      if(versionSW===null){ versionSW="sin respuesta"; if(vista==="cfg") pintarAjustes(); }
+    },3000);
+  }else{
+    versionSW="aún sin control (recarga la página)";
+    if(vista==="cfg") pintarAjustes();
+  }
 }
+const espera=ms=>new Promise(r=>setTimeout(r,ms));
 /* Salida de emergencia: borra service worker y cachés y vuelve a descargar la
    app. No toca localStorage, así que los registros se mantienen. */
 async function forzarActualizacion(){
