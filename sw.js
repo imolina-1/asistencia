@@ -1,40 +1,63 @@
-/* Guarda la app en el propio teléfono para que abra sin conexión.
-   Para publicar una versión nueva, cambia el número de CACHE. */
-const CACHE = "lista-v5";
-const ARCHIVOS = [
-  "./", "./index.html", "./manifest.webmanifest",
-  "./icon-180.png", "./icon-192.png", "./icon-512.png"
-];
+/* Service worker de Lista.
+   El número de abajo DEBE coincidir con el VERSION de index.html.
+   Es el único número que hay que tocar al publicar una versión nueva. */
+const VERSION = "1.5";
+const CACHE   = "lista-" + VERSION;
+const ESTATICOS = ["./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 
+/* Instala y toma el control de inmediato, sin esperar a que se cierren
+   las pestañas: en una app de pantalla de inicio eso no pasa nunca. */
 self.addEventListener("install", ev => {
-  ev.waitUntil(caches.open(CACHE).then(c => c.addAll(ARCHIVOS)));
+  ev.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(ESTATICOS.concat(["./", "./index.html"]));
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", ev => {
-  ev.waitUntil(
-    caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  ev.waitUntil((async () => {
+    const ks = await caches.keys();
+    await Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
-/* Sirve desde el teléfono al instante y, si hay red, se trae la versión
-   nueva en segundo plano para la próxima vez. */
+/* La página puede preguntar qué versión está sirviendo esta caché. */
+self.addEventListener("message", ev => {
+  if (ev.data === "version" && ev.source) ev.source.postMessage({ swVersion: VERSION });
+});
+
+const conTiempo = (p, ms) => Promise.race([
+  p, new Promise((_, rej) => setTimeout(() => rej(new Error("tarda demasiado")), ms))
+]);
+
 self.addEventListener("fetch", ev => {
   const req = ev.request;
   if (req.method !== "GET") return;
-  if (new URL(req.url).origin !== self.location.origin) return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
 
-  ev.respondWith(
-    caches.match(req).then(guardada => {
-      const red = fetch(req).then(res => {
-        if (res && res.ok) {
-          const copia = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copia));
-        }
+  const esPagina = req.mode === "navigate" ||
+                   url.pathname.endsWith("/") || url.pathname.endsWith(".html");
+
+  if (esPagina) {
+    /* La página, primero de la red: con cobertura siempre la última versión.
+       Si la red tarda más de 2,5 s (wifi del centro), se sirve la copia local. */
+    ev.respondWith((async () => {
+      try {
+        const res = await conTiempo(fetch(req, { cache: "no-store" }), 2500);
+        const c = await caches.open(CACHE);
+        c.put("./index.html", res.clone());
         return res;
-      }).catch(() => guardada);
-      return guardada || red;
-    })
-  );
+      } catch (e) {
+        const guardada = await caches.match("./index.html");
+        return guardada || Response.error();
+      }
+    })());
+    return;
+  }
+
+  /* Iconos y manifiesto: de la caché, que no cambian. */
+  ev.respondWith(caches.match(req).then(r => r || fetch(req)));
 });

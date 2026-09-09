@@ -227,7 +227,7 @@ const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes"];
 const CICLO={P:"F",F:"R",R:"J",J:"P"};
 const ICONO={P:"",F:"F",R:"R",J:"J"};
 const NOMBRE_EST={F:"falta",R:"retraso",J:"justificada"};
-const VERSION="1.4";
+const VERSION="1.5";   // debe coincidir con el VERSION de sw.js
 
 /* ================= ALMACENAMIENTO VERIFICADO ================= */
 let persistente=true, modoPersistente=null, ultimaVerif=null, fallo=null, corrupto=false;
@@ -779,10 +779,17 @@ function pintarAjustes(){
       }).join("")+'</div>').join("")+
 
     '<div class="block"><h3>Borrar</h3><button class="btn warn" id="borrar">Borrar todos los registros</button></div>'+
-    '<div class="block"><h3>Versión '+VERSION+'</h3>'+
-      '<button class="btn" id="buscarAct">Buscar actualización</button>'+
-      (hayActualizacion?'<p class="muted">Versión nueva descargada: cierra la app del todo y vuelve a abrirla.</p>':'')+
-      '<p class="muted">Actualizar no toca tus registros.</p></div>';
+    '<div class="block"><h3>Versión</h3>'+
+      '<div class="diag"><span>App</span><b>'+VERSION+'</b></div>'+
+      '<div class="diag"><span>Caché instalada</span><b'+
+        (versionSW&&versionSW!==VERSION?' class="no"':'')+'>'+(versionSW||"comprobando…")+'</b></div>'+
+      (versionSW&&versionSW!==VERSION
+        ? '<p class="muted">No coinciden: se está sirviendo una copia antigua. Pulsa Forzar actualización.</p>'
+        : '')+
+      (hayActualizacion?'<p class="muted">Hay una versión nueva lista; se aplicará al reabrir.</p>':'')+
+      '<button class="btn" id="buscarAct" style="margin-top:10px">Buscar actualización</button>'+
+      '<button class="btn warn" id="forzarAct">Forzar actualización</button>'+
+      '<p class="muted">Ninguna de las dos toca tus registros.</p></div>';
 
   cont.querySelectorAll("select[data-dh]").forEach(s=>s.onchange=e=>{
     const dh=e.target.dataset.dh;
@@ -843,15 +850,23 @@ function pintarAjustes(){
   $("#buscarAct").onclick=async()=>{
     if(!regSW){ avisar("Sin service worker activo"); return; }
     avisar("Buscando…");
-    try{ await regSW.update(); avisar(hayActualizacion?"Versión nueva lista":"Ya tienes la última versión"); }
-    catch(e){ avisar("No se pudo comprobar. ¿Estás sin conexión?"); }
+    try{
+      await regSW.update();
+      await new Promise(r=>setTimeout(r,1200));        // dar tiempo a que instale
+      const hay = hayActualizacion || !!(regSW.waiting || regSW.installing);
+      avisar(hay ? "Versión nueva lista: se aplicará al reabrir la app"
+                 : "Ya tienes la última ("+VERSION+")");
+      pintarAjustes();
+    }catch(e){ avisar("No se pudo comprobar. ¿Estás sin conexión?"); }
   };
+  $("#forzarAct").onclick=forzarActualizacion;
 }
 
 /* ========================= NAVEGACIÓN ========================= */
 function actualizarAviso(){
   const hay = corrupto || !!fallo || !persistente || !instalada() ||
-              pendientes().length>0 || hayActualizacion;
+              pendientes().length>0 || hayActualizacion ||
+              (versionSW && versionSW!==VERSION);
   $("#dotCfg").classList.toggle("hide",!hay);
 }
 function pintar(){
@@ -905,29 +920,71 @@ function reevaluar(){
 }
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden) return;
-  reevaluar();
+  reevaluar(); preguntarSW();
   if(config.syncUrl) sincronizar();
 });
 window.addEventListener("pageshow",reevaluar);
 setInterval(reevaluar,60000);
 
-/* ================= SIN CONEXIÓN ================= */
-let regSW=null, hayActualizacion=false;
+/* ================= SIN CONEXIÓN Y ACTUALIZACIONES ================= */
+let regSW=null, hayActualizacion=false, versionSW=null;
+
 if("serviceWorker" in navigator){
+  const habiaControl = !!navigator.serviceWorker.controller;
+  let recargando=false;
+
+  /* Cuando el service worker nuevo toma el control, la página se recarga sola
+     una vez. Así la actualización se aplica sin cerrar nada a mano. */
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(!habiaControl || recargando) return;
+    recargando=true;
+    location.reload();
+  });
+
+  navigator.serviceWorker.addEventListener("message",e=>{
+    if(e.data && e.data.swVersion){
+      versionSW=e.data.swVersion;
+      if(vista==="cfg") pintarAjustes();
+      actualizarAviso();
+    }
+  });
+
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("sw.js").then(r=>{
       regSW=r;
+      if(r.waiting) hayActualizacion=true;
       r.addEventListener("updatefound",()=>{
         const nuevo=r.installing; if(!nuevo) return;
         nuevo.addEventListener("statechange",()=>{
           if(nuevo.state==="installed"&&navigator.serviceWorker.controller){
             hayActualizacion=true; actualizarAviso();
-            avisar("Hay una versión nueva. Ciérrala y ábrela otra vez.");
           }
         });
       });
+      preguntarSW();
     }).catch(()=>{});
   });
+}
+function preguntarSW(){
+  if(navigator.serviceWorker && navigator.serviceWorker.controller)
+    navigator.serviceWorker.controller.postMessage("version");
+}
+/* Salida de emergencia: borra service worker y cachés y vuelve a descargar la
+   app. No toca localStorage, así que los registros se mantienen. */
+async function forzarActualizacion(){
+  if(!confirm("Se volverá a descargar la app desde cero.\n\nTus registros de asistencia NO se borran. ¿Continuar?")) return;
+  avisar("Descargando de nuevo…");
+  try{
+    if(navigator.serviceWorker){
+      const rs=await navigator.serviceWorker.getRegistrations();
+      await Promise.all(rs.map(r=>r.unregister()));
+    }
+    if(window.caches){
+      const ks=await caches.keys();
+      await Promise.all(ks.map(k=>caches.delete(k)));
+    }
+  }catch(e){}
+  setTimeout(()=>location.reload(),400);
 }
 
 autoSeleccionar();
