@@ -53,13 +53,31 @@ header{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;
   background:#e8a33d;border:1.5px solid var(--ink)}
 
 /* ---------- selector ---------- */
-.picker{background:#252a33;padding:11px 12px 13px;color:#fff}
-.picker h3{margin:0 0 7px;font-size:11px;font-weight:600;color:#98a1b0;letter-spacing:.06em}
+.selNav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.selNav .nav{flex:0 0 auto;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);
+  background:#fff;font-size:20px;line-height:1;cursor:pointer;color:var(--ink-2)}
+.selFecha{flex:1;text-align:center;line-height:1.2}
+.selFecha b{display:block;font-size:16px}
+.selFecha span{font-size:13px;color:var(--ink-2)}
+.selRow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;
+  background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:6px}
+.selRow.act{border-color:var(--ink);background:#f4f3f0;box-shadow:inset 0 0 0 1px var(--ink)}
+.selH{flex:0 0 30px;font-size:13px;font-weight:650;color:var(--ink-2)}
+.selN{flex:1;min-width:0;line-height:1.2}
+.selN b{display:block;font-size:15.5px;font-weight:650}
+.selN span{font-size:12.5px;color:var(--ink-2)}
+.selE{flex:0 0 auto;font-size:11.5px;font-weight:600;padding:4px 8px;border-radius:7px;
+  background:#f0eeea;color:var(--ink-2);text-align:right;max-width:38%}
+.selE.ok{background:#e8f2ec;color:#155c39}
+.selE.aviso{background:var(--retraso-bg);color:var(--retraso)}
+.otra{width:100%;background:none;border:0;border-top:1px solid var(--line-2);margin-top:8px;
+  padding:12px 0 8px;font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{background:rgba(255,255,255,.10);border:0;color:#fff;padding:8px 13px;border-radius:999px;
-  font-size:15px;font-weight:600;cursor:pointer;text-align:left;line-height:1.15}
-.chip[aria-pressed="true"]{background:#fff;color:var(--ink)}
-.chip small{display:block;font-size:11px;font-weight:500;opacity:.7;margin-top:2px}
+.chipL{background:#f0eeea;border:1px solid transparent;color:var(--ink);padding:8px 12px;
+  border-radius:999px;font-size:14.5px;font-weight:600;cursor:pointer;text-align:left;line-height:1.15}
+.chipL[aria-pressed="true"]{background:var(--ink);color:#fff}
+.chipL small{display:block;font-size:10.5px;font-weight:500;opacity:.72;margin-top:2px}
+.pend{color:#e8a33d;font-weight:600}
 
 /* ---------- avisos ---------- */
 .banner{margin:10px 10px 0;padding:10px 12px;border-radius:11px;font-size:13.5px;line-height:1.4;
@@ -132,6 +150,7 @@ td.det{font-size:13px;color:var(--ink-2);background:#faf9f7;padding:9px 8px}
 select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--line);
   border-radius:9px;padding:10px;background:#fff;width:100%}
 .grid5{display:grid;grid-template-columns:32px 1fr;gap:8px;align-items:center;margin-bottom:6px}
+.grid7{display:grid;grid-template-columns:30px 1fr 1fr;gap:7px;align-items:center;margin-bottom:6px}
 .muted{color:var(--ink-2);font-size:13px}
 .warnbox{background:var(--retraso-bg);border:1px solid var(--retraso-ln);border-radius:11px;
   padding:11px;font-size:13.5px;margin-bottom:12px;line-height:1.45}
@@ -145,7 +164,8 @@ select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--
 .ovl{position:fixed;inset:0;background:rgba(28,31,38,.5);z-index:50;display:flex;
   justify-content:center;align-items:flex-start;padding:0 10px}
 .sheet{background:var(--card);width:100%;max-width:520px;border-radius:14px;padding:16px;
-  margin-top:calc(56px + env(safe-area-inset-top));box-shadow:0 12px 40px rgba(0,0,0,.25)}
+  margin-top:calc(52px + env(safe-area-inset-top));box-shadow:0 12px 40px rgba(0,0,0,.25);
+  max-height:calc(100vh - 90px);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .sheet h4{margin:0 0 4px;font-size:16px}
 .sheet .sub{margin:0 0 11px;font-size:13px;color:var(--ink-2)}
 .sheet textarea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:10px;padding:10px}
@@ -171,11 +191,6 @@ select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--
   </div>
 </header>
 
-<div class="picker hide" id="picker">
-  <h3>CLASE</h3><div class="chips" id="chipsClase"></div>
-  <h3 style="margin-top:12px">HORA</h3><div class="chips" id="chipsHora"></div>
-</div>
-
 <main>
   <div id="viewLista">
     <div id="banner"></div>
@@ -196,7 +211,7 @@ select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--
 "use strict";
 
 /* ========================= DATOS ========================= */
-const ALUMNOS = {"1ºD": ["Almela Martínez, Ignacio", "Altemir Seller, Jordi", "Cova Trijillo, Diego Alejandro", "Díaz Vaquerizo, José", "Gallego Guillén, Javier", "García Pérez, Juan Pablo", "Gavira Castillo, David", "Gordo Sánchez de las Matas, Mateo", "Mejía López, Jonathan Moisés", "Villarrubia Moreno, Héctor", "Villavicencio López, Jonathan"], "2ºB": ["Acito Muñoz, Fabio", "Avilés Tassi, José Joaquín", "Cernea, Lucas Florín", "Chen Chen, Fengkai", "Chen Zhu, Wenhao", "Del Castillo, Gabriel Alejandro", "Eiras Gil, Saúl", "Elorza Delgado, Darío", "Hortigón Morán, Pablo", "Llana Vázquez, Luis", "Montoro Díaz, Álvaro", "Mora Rodríguez, David", "Rivera Luna, José Luis", "Rodríguez Galindo, José María", "Sanmartín Saavedra, Álvaro Guillermo", "Sovago Crisan, Alexandru", "Zamorano Vazquez, Mario Ronald"], "2ºC": ["Agudo Ares, Sergio", "Alcalde Berrendo, José Ignacio", "Asenjo Benavides, José Carlos", "Azapwah Nkeng, Gislain", "Benalcázar Torres, Mauricio", "Bravo Fernández, Carlos", "Buján Vicente, Álvaro", "Buna Sitoka, Alexander", "Cano Aliaga, Joseph Anthony", "Cuellar Hutupas, Jorge Gabriel", "De Pablo Sanz, Beltrán", "De Santiago Berrocal, Raúl", "De Torres Caraballo, Pablo", "Diamantis Contreras, Nestor Basil", "Flores Ramírez, Rodolfo Joaquín", "García Nieto, Miguel", "Hermoso Menéndez, Pablo", "Mera Cuesta, Ramsés", "Montesino Rodríguez, David", "Paja Álvarez, Gonzalo", "Pasán Díaz, Gabriel", "Pavón Mancheño, Nicolás", "Prado Perea, Pablo", "Rojas Fernández, Antonio", "Romero García, Juan", "Segovia Hernández, Moisés", "Solá Sánchez, Pablo", "Tendero Jiménez, Carlos", "Torres Betancur, Julián Mateo", "Vasquez Cabello, Massimo Octavio"], "2ºD": ["Aparicio Blazquez, Luis", "Fuertes García, Daniel", "González del Campo Alonso, Jesús Enrique", "González García, Santiago", "Lema Ávila, Aarón Alejandro", "López Rocamora, Rodrigo", "Martínez Escandon, José María", "Mendoza Pujalt, Jorge Augusto", "Ramírez Ferreira, Mateo", "Santamaría Torres, Daniel", "Santana Llanes, Samuel David", "Valverde León, Antonio"], "2ºA": []};
+const ALUMNOS = {"1ºD": ["Almela Martínez, Ignacio", "Altemir Seller, Jordi", "Cova Trijillo, Diego Alejandro", "Díaz Vaquerizo, José", "Gallego Guillén, Javier", "García Pérez, Juan Pablo", "Gavira Castillo, David", "Gordo Sánchez de las Matas, Mateo", "Mejía López, Jonathan Moisés", "Villarrubia Moreno, Héctor", "Villavicencio López, Jonathan"], "2ºB": ["Acito Muñoz, Fabio", "Avilés Tassi, José Joaquín", "Cernea, Lucas Florín", "Chen Chen, Fengkai", "Chen Zhu, Wenhao", "Del Castillo, Gabriel Alejandro", "Eiras Gil, Saúl", "Elorza Delgado, Darío", "Hortigón Morán, Pablo", "Llana Vázquez, Luis", "Montoro Díaz, Álvaro", "Mora Rodríguez, David", "Rivera Luna, José Luis", "Rodríguez Galindo, José María", "Sanmartín Saavedra, Álvaro Guillermo", "Sovago Crisan, Alexandru", "Zamorano Vazquez, Mario Ronald"], "2ºC": ["Agudo Ares, Sergio", "Alcalde Berrendo, José Ignacio", "Asenjo Benavides, José Carlos", "Azapwah Nkeng, Gislain", "Benalcázar Torres, Mauricio", "Bravo Fernández, Carlos", "Buján Vicente, Álvaro", "Buna Sitoka, Alexander", "Cano Aliaga, Joseph Anthony", "Cuellar Hutupas, Jorge Gabriel", "De Pablo Sanz, Beltrán", "De Santiago Berrocal, Raúl", "De Torres Caraballo, Pablo", "Diamantis Contreras, Nestor Basil", "Flores Ramírez, Rodolfo Joaquín", "García Nieto, Miguel", "Hermoso Menéndez, Pablo", "Mera Cuesta, Ramsés", "Montesino Rodríguez, David", "Paja Álvarez, Gonzalo", "Pasán Díaz, Gabriel", "Pavón Mancheño, Nicolás", "Prado Perea, Pablo", "Rojas Fernández, Antonio", "Romero García, Juan", "Segovia Hernández, Moisés", "Solá Sánchez, Pablo", "Tendero Jiménez, Carlos", "Torres Betancur, Julián Mateo", "Vasquez Cabello, Massimo Octavio"], "2ºD": ["Aparicio Blazquez, Luis", "Fuertes García, Daniel", "González del Campo Alonso, Jesús Enrique", "González García, Santiago", "Lema Ávila, Aarón Alejandro", "López Rocamora, Rodrigo", "Martínez Escandon, José María", "Mendoza Pujalt, Jorge Augusto", "Ramírez Ferreira, Mateo", "Santamaría Torres, Daniel", "Santana Llanes, Samuel David", "Valverde León, Antonio"], "2ºA": ["Álvarez Pinto, Jesús Daniel", "Aponte Díaz, Thobias Manuel", "Caluseru, Cristian", "Centellas Solares, Rene Kaleb", "Collado Díaz, Juan", "de la Fuente Auquillas, Darío Miguel", "Dopico Martínez, Luca", "Garcia Florea, Diego", "Garcia Maciel, Alejandro Miguel", "García Palacios, Daniel", "Gavira Castillo, Alejandro", "Herranz Toril, Ángel Luis", "Jiménez Coello, Guillermo", "Martín Algaba, Víctor", "Martín Hurtado, Eloy", "Miranda Blazquez, Joel", "Moratiel Sánchez, Ángel", "Moreta Santander, Adrián Guillermo", "Naranjo El Rezz, Nicolás", "Niebla Ruiz de Pascual, Ismael", "Otamendi Roa, Jacob de Jesús", "Poliwani Castillejos, Eizan", "Ramos Castillo, Raúl", "She, Zewei", "Silva Rodríguez, Carlos Xavier", "Suárez Torrealba, Diego Ismael"]};
 
 const CLASES = [
   {id:"1D-HMC", grupo:"1ºD", mat:"Historia del Mundo Contemporáneo", corto:"H.ª Mundo Cont."},
@@ -212,7 +227,7 @@ const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes"];
 const CICLO={P:"F",F:"R",R:"J",J:"P"};
 const ICONO={P:"",F:"F",R:"R",J:"J"};
 const NOMBRE_EST={F:"falta",R:"retraso",J:"justificada"};
-const VERSION="1.2";
+const VERSION="1.4";
 
 /* ================= ALMACENAMIENTO VERIFICADO ================= */
 let persistente=true, modoPersistente=null, ultimaVerif=null, fallo=null, corrupto=false;
@@ -265,10 +280,12 @@ let sesiones = leerObjeto(K_SES, {});
 
 /* Horario de Tajamar 26-27 ya cargado. Si lo cambias a mano, tus cambios mandan:
    solo se reescribe cuando sube CFG_VERSION. */
-const CFG_VERSION = 2;
+const CFG_VERSION = 3;
 const HORARIO = {"0-3": "2C-HE", "0-5": "2B-HE", "0-6": "2C-HA", "0-7": "2D-HA", "1-2": "2C-HA", "1-3": "2D-HA", "1-4": "2B-HE", "1-5": "1D-HMC", "2-2": "2C-HE", "2-3": "2D-HA", "2-4": "1D-HMC", "2-5": "2A-GEH", "2-6": "2C-HA", "2-7": "2B-HE", "3-1": "2C-HA", "3-2": "2A-GEH", "3-3": "1D-HMC", "3-4": "2C-HE", "4-2": "1D-HMC", "4-3": "2A-GEH", "4-4": "2B-HE", "4-6": "2D-HA", "4-7": "2C-HE"};
 const CFG_DEF = {cfgVersion:CFG_VERSION, horario:HORARIO,
-  inicios:["08:00", "09:00", "09:55", "11:25", "12:20", "13:10", "14:05"], fin:"14:50", ultimoBackup:null, syncUrl:""};
+  inicios:["08:00","09:00","09:55","11:25","12:20","13:10","14:05"],
+  fines:  ["08:55","09:50","10:40","12:15","13:05","14:00","14:50"],
+  ultimoBackup:null, syncUrl:""};
 
 let config;
 {
@@ -295,7 +312,7 @@ const instalada = () => window.navigator.standalone===true ||
   (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
 
 /* ========================= ESTADO ========================= */
-let vista="lista", fecha=iso(new Date()), claseId=null, hora=null, pickerAbierto=false;
+let vista="lista", fecha=iso(new Date()), claseId=null, hora=null;
 const filas = new Map();
 
 function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
@@ -306,29 +323,38 @@ function esHoy(){return fecha===iso(new Date());}
 function ddmm(f){return f.split("-").reverse().join("/");}
 function diaDe(f){return DIAS[(new Date(f+"T12:00")).getDay()-1]||"Fin de semana";}
 
-function ahoraTramo(){
+const aMin = t => { const [h,m]=String(t).split(":").map(Number); return h*60+m; };
+
+/* No busca "qué tramo es ahora" sino "cuál es mi próxima clase de hoy".
+   Salta las horas libres: la primera clase del día cuyo final aún no ha
+   pasado es la que toca, esté empezada o por empezar. */
+function claseAhora(){
   const d=new Date(), dia=d.getDay()-1;
-  if(dia<0||dia>4) return {dia:null,hora:null};
-  const min=d.getHours()*60+d.getMinutes();
-  const mins=config.inicios.map(t=>{const[h,m]=t.split(":").map(Number);return h*60+m;});
-  const[fh,fm]=config.fin.split(":").map(Number);
-  const ANTES=8;
-  if(min<mins[0]-ANTES||min>fh*60+fm+15) return {dia,hora:null};
-  let h=1; for(let i=0;i<mins.length;i++) if(min>=mins[i]-ANTES) h=i+1;
-  return {dia,hora:h};
-}
-function autoSeleccionar(){
-  const g=leerObjeto(K_ULT,null), {dia,hora:h}=ahoraTramo();
-  let auto=false;
-  if(dia!==null && h!==null){
-    hora=h;
-    const cell=config.horario[dia+"-"+h];
-    if(cell){ claseId=cell; auto=true; }
+  if(dia<0||dia>4) return null;                       // fin de semana: no inventa nada
+  const ahora=d.getHours()*60+d.getMinutes();
+  const fines=config.fines.map(aMin);
+  const mias=HORAS.filter(h=>config.horario[dia+"-"+h]);
+  if(!mias.length) return null;                       // día sin clases suyas
+  const GRACIA=3;                                     // margen para cerrar el parte al salir
+  for(const h of mias){
+    if(ahora <= fines[h-1]+GRACIA)
+      return {hora:h, id:config.horario[dia+"-"+h], dia:dia};
   }
-  if(!claseId) claseId=(g&&g.c)||CLASES[0].id;
-  if(!hora) hora=(g&&g.h)||1;
+  const ult=mias[mias.length-1];                      // jornada terminada
+  return {hora:ult, id:config.horario[dia+"-"+ult], dia:dia, pasada:true};
+}
+
+function autoSeleccionar(){
+  const a=claseAhora();
+  if(a){
+    claseId=a.id; hora=a.hora;
+    return true;
+  }
+  const g=leerObjeto(K_ULT,null);
+  claseId=(g&&g.c)||CLASES[0].id;
+  hora=(g&&g.h)||1;
   if(!CLASES.some(c=>c.id===claseId)) claseId=CLASES[0].id;
-  pickerAbierto = !auto;               // si el horario ya sabe qué toca, no estorba
+  return false;
 }
 
 /* ========================= RENDER ========================= */
@@ -340,33 +366,35 @@ function pintarCabecera(){
   const big=$("#ctxBig"), small=$("#ctxSmall");
   if(vista==="lista"){
     big.innerHTML=esc(c.grupo)+" · "+hora+'ª<span class="chev">▾</span>';
-    big.classList.toggle("abierto",pickerAbierto);
-    small.textContent=c.corto+" · "+(esHoy()?"hoy":diaDe(fecha))+" "+ddmm(fecha)+(s&&s.ts?" · cerrado":"");
+    const olv=olvidadas();
+    small.innerHTML=esc(c.corto+" · "+(esHoy()?"hoy":diaDe(fecha))+" "+ddmm(fecha)+(s&&s.ts?" · cerrado":""))+
+      (olv?' <span class="pend">· '+olv+' sin registrar</span>':'');
     small.classList.remove("hide"); big.disabled=false;
   }else{
     big.innerHTML=vista==="sum"?"Resumen":"Ajustes";
-    big.classList.remove("abierto"); big.disabled=true;
+    big.disabled=true;
     small.textContent="Curso 26-27";
   }
   $("#btnBack").classList.toggle("hide",vista==="lista");
 }
 
-function pintarChips(){
-  const cc=$("#chipsClase"); cc.innerHTML="";
-  CLASES.forEach(c=>{
-    const b=document.createElement("button");
-    b.className="chip"; b.innerHTML=esc(c.grupo)+"<small>"+esc(c.corto)+"</small>";
-    b.setAttribute("aria-pressed",c.id===claseId);
-    b.onclick=()=>{ claseId=c.id; recordar(); construirLista(); pintarChips(); pintarCabecera(); };
-    cc.appendChild(b);
-  });
-  const ch=$("#chipsHora"); ch.innerHTML="";
-  HORAS.forEach(h=>{
-    const b=document.createElement("button");
-    b.className="chip"; b.textContent=h+"ª"; b.setAttribute("aria-pressed",h===hora);
-    b.onclick=()=>{ hora=h; recordar(); construirLista(); pintarChips(); pintarCabecera(); };
-    ch.appendChild(b);
-  });
+function clasesDe(f){
+  const dia=(new Date(f+"T12:00")).getDay()-1;
+  if(dia<0||dia>4) return [];
+  return HORAS.filter(x=>config.horario[dia+"-"+x]).map(x=>({h:x, id:config.horario[dia+"-"+x]}));
+}
+function estadoDe(f,id,x){
+  const s=sesiones[f+"|"+id+"|"+x];
+  if(!s) return {txt:"sin registrar", cls:"neutro"};
+  const n=Object.keys(s.e||{}).length;
+  if(s.ts) return {txt:(n?n+" incidencia"+(n>1?"s":""):"sin incidencias"), cls:"ok"};
+  return {txt:(n?"sin confirmar · "+n:"sin confirmar"), cls:"aviso"};
+}
+/* Clases de hoy que ya han terminado y siguen sin parte cerrado. */
+function olvidadas(){
+  if(fecha!==iso(new Date())) return 0;
+  const d=new Date(), ahora=d.getHours()*60+d.getMinutes(), fin=config.fines.map(aMin);
+  return clasesDe(fecha).filter(c=>ahora>fin[c.h-1]&&!(sesiones[fecha+"|"+c.id+"|"+c.h]||{}).ts).length;
 }
 
 function acumulado(nombre){
@@ -512,20 +540,61 @@ function abrirNota(nombre){
   setTimeout(()=>ovl.querySelector("#nt").focus(),50);
 }
 
-/* ---------- fecha ---------- */
-function abrirFecha(){
-  const ovl=hoja('<h4>Fecha del parte</h4><p class="sub">Para rellenar una clase de otro día</p>'+
-    '<input type="date" id="fx" value="'+fecha+'" max="'+iso(new Date())+'">'+
-    '<div style="margin-top:10px;display:flex;gap:8px">'+
-    '<button class="btn" id="fHoy">Hoy</button><button class="btn" id="fC">Cancelar</button>'+
-    '<button class="btn dark" id="fG" style="flex:1">Usar esta fecha</button></div>');
-  const aplicar=f=>{ fecha=f; ovl.remove(); construirLista(); pintarCabecera(); };
-  ovl.querySelector("#fC").onclick=()=>ovl.remove();
-  ovl.querySelector("#fHoy").onclick=()=>aplicar(iso(new Date()));
-  ovl.querySelector("#fG").onclick=()=>{
-    const v=ovl.querySelector("#fx").value;
-    if(v) aplicar(v); else ovl.remove();
-  };
+/* ---------- selector: día, clases de ese día y cualquier otra ---------- */
+let otraAbierta=false;
+function abrirSelector(){
+  const ovl=hoja('<div id="selCuerpo"></div>');
+  const cont=ovl.querySelector("#selCuerpo");
+
+  const ir=(f,id,x)=>{ fecha=f; claseId=id; hora=x; recordar(); ovl.remove();
+    construirLista(); pintarCabecera(); };
+  const mover=n=>{ const d=new Date(fecha+"T12:00"); d.setDate(d.getDate()+n);
+    fecha=iso(d); dibujar(); pintarCabecera(); };
+
+  function dibujar(){
+    const dia=clasesDe(fecha);
+    cont.innerHTML=
+      '<div class="selNav"><button class="nav" id="pv" aria-label="Día anterior">‹</button>'+
+        '<div class="selFecha"><b>'+esc(diaDe(fecha))+'</b><span>'+ddmm(fecha)+'</span></div>'+
+        '<button class="nav" id="nx" aria-label="Día siguiente">›</button></div>'+
+      (esHoy()?'':'<button class="btn" id="hoy" style="width:100%;margin:0 0 12px">Volver a hoy</button>')+
+      (dia.length
+        ? dia.map(c=>{
+            const st=estadoDe(fecha,c.id,c.h), cl=porId(c.id);
+            const act=(c.id===claseId&&c.h===hora);
+            return '<button class="selRow'+(act?' act':'')+'" data-id="'+c.id+'" data-h="'+c.h+'">'+
+              '<span class="selH">'+c.h+'ª</span>'+
+              '<span class="selN"><b>'+esc(cl.grupo)+'</b><span>'+esc(cl.corto)+'</span></span>'+
+              '<span class="selE '+st.cls+'">'+esc(st.txt)+'</span></button>';
+          }).join("")
+        : '<p class="muted" style="margin:0 0 12px">No tienes clase este día.</p>')+
+      '<button class="otra" id="otraBtn">Otra clase u hora '+(otraAbierta?'▴':'▾')+'</button>'+
+      '<div id="otra" class="'+(otraAbierta?'':'hide')+'">'+
+        '<div class="chips" style="margin-bottom:9px">'+
+          CLASES.map(c=>'<button class="chipL" data-c="'+c.id+'" aria-pressed="'+(c.id===claseId)+'">'+
+            esc(c.grupo)+'<small>'+esc(c.corto)+'</small></button>').join("")+'</div>'+
+        '<div class="chips">'+HORAS.map(x=>'<button class="chipL" data-x="'+x+'" aria-pressed="'+
+          (x===hora)+'">'+x+'ª</button>').join("")+'</div>'+
+        '<button class="btn dark" id="otraIr" style="width:100%;margin:11px 0 0">Ir a esa clase</button>'+
+      '</div>';
+
+    cont.querySelector("#pv").onclick=()=>mover(-1);
+    cont.querySelector("#nx").onclick=()=>mover(1);
+    const bh=cont.querySelector("#hoy"); if(bh) bh.onclick=()=>{ fecha=iso(new Date()); dibujar(); pintarCabecera(); };
+    cont.querySelectorAll(".selRow").forEach(b=>b.onclick=()=>ir(fecha,b.dataset.id,+b.dataset.h));
+    cont.querySelector("#otraBtn").onclick=()=>{ otraAbierta=!otraAbierta; dibujar(); };
+    let cSel=claseId, xSel=hora;
+    cont.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{
+      cSel=b.dataset.c;
+      cont.querySelectorAll("[data-c]").forEach(o=>o.setAttribute("aria-pressed",o.dataset.c===cSel));
+    });
+    cont.querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{
+      xSel=+b.dataset.x;
+      cont.querySelectorAll("[data-x]").forEach(o=>o.setAttribute("aria-pressed",+o.dataset.x===xSel));
+    });
+    cont.querySelector("#otraIr").onclick=()=>ir(fecha,cSel,xSel);
+  }
+  dibujar();
 }
 
 /* ================= COPIA EN LA NUBE ================= */
@@ -672,6 +741,14 @@ function pintarAjustes(){
       '<div class="diag"><span>Última escritura verificada</span><b>'+(ultimaVerif?new Date(ultimaVerif).toLocaleString("es-ES"):"—")+'</b></div>'+
       '<button class="btn" id="probar" style="margin-top:11px">Probar el guardado ahora</button></div>'+
 
+    '<div class="block"><h3>Detección automática</h3>'+
+      '<div class="diag"><span>Ahora mismo</span><b>'+
+        (["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"][new Date().getDay()])+' '+
+        new Date().toLocaleTimeString("es-ES",{hour:"2-digit",minute:"2-digit"})+'</b></div>'+
+      '<div class="diag"><span>Te sitúa en</span><b>'+(()=>{ const a=claseAhora();
+        return a ? esc(porId(a.id).grupo+" · "+porId(a.id).corto+" · "+a.hora+"ª"+(a.pasada?" (jornada terminada)":""))
+                 : "nada: hoy no tienes clase"; })()+'</b></div>'+
+      '<p class="muted" style="margin:9px 0 0">Si esto no coincide con tu horario real, revisa los tramos y la rejilla de abajo.</p></div>'+
     '<div class="block"><h3>Copia de seguridad</h3>'+
       '<button class="btn dark" id="bkGuardar">Guardar copia (.json)</button>'+
       '<button class="btn" id="bkCargar">Restaurar copia</button>'+
@@ -685,8 +762,10 @@ function pintarAjustes(){
       (config.syncUrl?'<button class="btn" id="syncAhora">Enviar pendientes ('+pend+')</button>':'')+'</div>'+
 
     '<div class="block"><h3>Tramos horarios</h3>'+
-      HORAS.map(h=>'<div class="grid5"><div class="muted">'+h+'ª</div><input type="time" data-ini="'+(h-1)+'" value="'+config.inicios[h-1]+'"></div>').join("")+
-      '<div class="grid5"><div class="muted">fin</div><input type="time" id="finClase" value="'+config.fin+'"></div></div>'+
+      '<div class="grid7"><div></div><div class="muted">empieza</div><div class="muted">acaba</div></div>'+
+      HORAS.map(h=>'<div class="grid7"><div class="muted">'+h+'ª</div>'+
+        '<input type="time" data-ini="'+(h-1)+'" value="'+config.inicios[h-1]+'">'+
+        '<input type="time" data-fin="'+(h-1)+'" value="'+config.fines[h-1]+'"></div>').join("")+'</div>'+
 
     '<h3 style="margin:18px 0 6px">Horario semanal</h3>'+
     '<p class="muted" style="margin-bottom:10px">Rellénalo y la app se abrirá sola en la clase que toca. Ojo: 2ºC aparece dos veces, una por asignatura.</p>'+
@@ -713,7 +792,9 @@ function pintarAjustes(){
   cont.querySelectorAll("input[data-ini]").forEach(i=>i.onchange=e=>{
     config.inicios[+e.target.dataset.ini]=e.target.value; escribir(K_CFG,config);
   });
-  $("#finClase").onchange=e=>{config.fin=e.target.value;escribir(K_CFG,config);};
+  cont.querySelectorAll("input[data-fin]").forEach(i=>i.onchange=e=>{
+    config.fines[+e.target.dataset.fin]=e.target.value; escribir(K_CFG,config);
+  });
   $("#probar").onclick=()=>{
     const t="prueba_"+Date.now();
     const r=escribir("asist2627_prueba",t);
@@ -775,13 +856,12 @@ function actualizarAviso(){
 }
 function pintar(){
   pintarCabecera();
-  $("#picker").classList.toggle("hide", vista!=="lista" || !pickerAbierto);
   $("#bar").classList.toggle("hide",vista!=="lista");
   $("#viewLista").classList.toggle("hide",vista!=="lista");
   $("#viewSum").classList.toggle("hide",vista!=="sum");
   $("#viewCfg").classList.toggle("hide",vista!=="cfg");
   document.body.style.paddingBottom = vista==="lista" ? "" : "28px";
-  if(vista==="lista"){ pintarChips(); construirLista(); }
+  if(vista==="lista") construirLista();
   if(vista==="sum") pintarResumen();
   if(vista==="cfg") pintarAjustes();
   actualizarAviso();
@@ -789,9 +869,8 @@ function pintar(){
 }
 function recordar(){escribir(K_ULT,{c:claseId,h:hora});}
 
-$("#ctxBig").onclick=()=>{ if(vista!=="lista") return; pickerAbierto=!pickerAbierto;
-  $("#picker").classList.toggle("hide",!pickerAbierto); pintarCabecera(); };
-$("#ctxSmall").onclick=()=>{ if(vista==="lista") abrirFecha(); };
+$("#ctxBig").onclick=()=>{ if(vista==="lista") abrirSelector(); };
+$("#ctxSmall").onclick=()=>{ if(vista==="lista") abrirSelector(); };
 $("#btnSum").onclick=()=>{vista="sum";pintar();};
 $("#btnCfg").onclick=()=>{vista="cfg";pintar();};
 $("#btnBack").onclick=()=>{vista="lista";pintar();};
@@ -809,17 +888,28 @@ document.addEventListener("touchmove",e=>{
   if(Math.abs(e.touches[0].clientY-y0)>8) movido=true;
 },{passive:true});
 
-/* Al volver a la app: actualiza el día y, si no había nada marcado, la clase que toca. */
-let salida=Date.now();
+/* Recolocarse en la clase que toca: al volver a la app, al restaurarla desde
+   la memoria y con el paso de las horas si se queda abierta encima de la mesa.
+   Nunca pisa un parte a medio marcar. */
+function reevaluar(){
+  if(vista!=="lista") return;
+  const s=ses();
+  const aMedias = s && !s.ts && Object.keys(s.e||{}).length>0;
+  const hoyIso=iso(new Date());
+  if(aMedias && hoyIso===fecha) return;
+  const a=claseAhora();
+  if(!a) return;
+  if(hoyIso===fecha && a.id===claseId && a.hora===hora) return;   // ya estamos donde toca
+  fecha=hoyIso; claseId=a.id; hora=a.hora;
+  recordar(); pintar();
+}
 document.addEventListener("visibilitychange",()=>{
-  if(document.hidden){ salida=Date.now(); return; }
-  const nuevaFecha=iso(new Date());
-  if(vista==="lista" && Date.now()-salida>25*60*1000){
-    const s=ses(), vacia=!s||Object.keys(s.e||{}).length===0;
-    if(vacia){ fecha=nuevaFecha; autoSeleccionar(); pintar(); }
-  }
+  if(document.hidden) return;
+  reevaluar();
   if(config.syncUrl) sincronizar();
 });
+window.addEventListener("pageshow",reevaluar);
+setInterval(reevaluar,60000);
 
 /* ================= SIN CONEXIÓN ================= */
 let regSW=null, hayActualizacion=false;

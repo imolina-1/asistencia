@@ -1,6 +1,6 @@
 /* Guarda la app en el propio teléfono para que abra sin conexión.
    Para publicar una versión nueva, cambia el número de CACHE. */
-const CACHE = "lista-v3";
+const CACHE = "lista-v5";
 const ARCHIVOS = [
   "./", "./index.html", "./manifest.webmanifest",
   "./icon-180.png", "./icon-192.png", "./icon-512.png"
