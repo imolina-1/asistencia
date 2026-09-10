@@ -78,6 +78,24 @@ header{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;
 .chipL[aria-pressed="true"]{background:var(--ink);color:#fff}
 .chipL small{display:block;font-size:10.5px;font-weight:500;opacity:.72;margin-top:2px}
 .pend{color:#e8a33d;font-weight:600}
+.cerca{color:var(--retraso);font-weight:650}
+.riesgo{display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;
+  background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:6px}
+.riesgo.aviso{background:var(--retraso-bg);border-color:var(--retraso-ln)}
+.riesgo.grave{background:var(--falta-bg);border-color:var(--falta-ln)}
+.riN{flex:1;min-width:0;line-height:1.25}
+.riN b{display:block;font-size:15px;font-weight:650}
+.riN span{font-size:12px;color:var(--ink-2)}
+.marcas{flex:0 0 auto;display:flex;align-items:center;gap:3px}
+.marcas i{width:9px;height:16px;border-radius:2px;background:transparent;
+  border:1.5px solid var(--line);display:block}
+.marcas i.on{background:var(--falta);border-color:var(--falta)}
+.marcas b{font-size:11px;color:var(--falta);margin-left:2px}
+.riC{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--ink-2);
+  font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+.riesgo.grave .riC{color:var(--falta)}
+.riDet{font-size:12.5px;color:var(--ink-2);background:#faf9f7;border:1px solid var(--line-2);
+  border-radius:9px;padding:9px 10px;margin:-2px 0 8px;line-height:1.5}
 .aluRow{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line-2)}
 .aluRow:last-of-type{border-bottom:0}
 .aluN{flex:0 0 22px;font-size:12px;color:var(--ink-3)}
@@ -106,9 +124,11 @@ main{max-width:640px;margin:0 auto}
 .row .nm{flex:1;min-width:0;padding:9px 0;font-size:15.5px;line-height:1.25;letter-spacing:-.005em}
 .row .nm b{font-weight:650}
 .row .nm span{color:var(--ink-2);font-weight:400}
-.row .acc{font-size:11.5px;font-weight:600;color:var(--ink-2);flex:0 0 auto;
-  padding:3px 7px;border-radius:6px;background:#f0eeea}
+.row .acc{font-size:11.5px;font-weight:700;color:var(--ink-2);flex:0 0 auto;
+  padding:3px 7px;border-radius:6px;background:#f0eeea;font-variant-numeric:tabular-nums}
 .row .acc.oculto{display:none}
+.row .acc.ambar{background:var(--retraso-bg);color:var(--retraso)}
+.row .acc.rojo{background:var(--falta);color:#fff}
 .row .note{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
   background:#fff;display:grid;place-items:center;font-size:13px;color:var(--ink-3)}
 .row .note.has{border-color:var(--ink);color:var(--ink);background:#f7f6f3}
@@ -160,6 +180,9 @@ select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--
   border-radius:9px;padding:10px;background:#fff;width:100%}
 .grid5{display:grid;grid-template-columns:32px 1fr;gap:8px;align-items:center;margin-bottom:6px}
 .grid7{display:grid;grid-template-columns:30px 1fr 1fr;gap:7px;align-items:center;margin-bottom:6px}
+.grid7 input[type=number]{width:100%}
+.check{display:flex;align-items:center;gap:9px;font-size:14px;margin-top:6px;cursor:pointer}
+.check input{width:20px;height:20px;flex:0 0 auto}
 .muted{color:var(--ink-2);font-size:13px}
 .warnbox{background:var(--retraso-bg);border:1px solid var(--retraso-ln);border-radius:11px;
   padding:11px;font-size:13.5px;margin-bottom:12px;line-height:1.45}
@@ -239,7 +262,7 @@ const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes"];
 const CICLO={P:"F",F:"R",R:"J",J:"P"};
 const ICONO={P:"",F:"F",R:"R",J:"J"};
 const NOMBRE_EST={F:"falta",R:"retraso",J:"justificada"};
-const VERSION="1.6";   // debe coincidir con el VERSION de sw.js
+const VERSION="1.7";   // debe coincidir con el VERSION de sw.js
 
 /* ================= ALMACENAMIENTO VERIFICADO ================= */
 let persistente=true, modoPersistente=null, ultimaVerif=null, fallo=null, corrupto=false;
@@ -308,6 +331,14 @@ const HORARIO = {"0-3": "2C-HE", "0-5": "2B-HE", "0-6": "2C-HA", "0-7": "2D-HA",
 const CFG_DEF = {cfgVersion:CFG_VERSION, horario:HORARIO,
   inicios:["08:00","09:00","09:55","11:25","12:20","13:10","14:05"],
   fines:  ["08:55","09:50","10:40","12:15","13:05","14:00","14:50"],
+  /* Norma de Bachillerato: 3 retrasos = 1 ausencia; 3 ausencias = sin examen.
+     Las justificadas no cuentan salvo que lo cambies en Ajustes. */
+  regla: {retrasos:3, limite:3, cuentanJust:false},
+  evaluaciones: [
+    {n:"1ª evaluación", d:"2026-09-07", h:"2026-12-19"},
+    {n:"2ª evaluación", d:"2027-01-08", h:"2027-03-26"},
+    {n:"3ª evaluación", d:"2027-03-27", h:"2027-06-19"}
+  ],
   ultimoBackup:null, syncUrl:""};
 
 let config;
@@ -447,13 +478,40 @@ function olvidadas(){
   return clasesDe(fecha).filter(c=>ahora>fin[c.h-1]&&!(sesiones[fecha+"|"+c.id+"|"+c.h]||{}).ts).length;
 }
 
-function acumulado(nombre){
-  let f=0;
+/* Cuenta faltas, retrasos y justificadas de un alumno en una asignatura y
+   traduce a "ausencias efectivas" según la norma del centro. */
+function computo(id,nombre,desde,hasta){
+  let f=0,r=0,j=0,cuando=[];
   for(const k in sesiones){
-    if(k.split("|")[1]!==claseId) continue;
-    if((sesiones[k].e||{})[nombre]==="F") f++;
+    const p=k.split("|");
+    if(p[1]!==id) continue;
+    if(desde && (p[0]<desde || p[0]>hasta)) continue;
+    const st=(sesiones[k].e||{})[nombre];
+    if(!st) continue;
+    if(st==="F")f++; else if(st==="R")r++; else if(st==="J")j++;
+    cuando.push({f:p[0],h:+p[2],st:st});
   }
-  return f;
+  const R=config.regla;
+  const ef = f + Math.floor(r/R.retrasos) + (R.cuentanJust?j:0);
+  cuando.sort((a,b)=>a.f<b.f?-1:a.f>b.f?1:a.h-b.h);
+  return {f:f,r:r,j:j,ef:ef,cuando:cuando};
+}
+function periodoActual(){
+  const hoy=iso(new Date());
+  const i=(config.evaluaciones||[]).findIndex(p=>hoy>=p.d&&hoy<=p.h);
+  return i>=0?i:"curso";
+}
+function rango(sel){
+  if(sel==="curso"||sel===null||sel===undefined) return {d:null,h:null,n:"Curso completo"};
+  const p=config.evaluaciones[sel];
+  return p?{d:p.d,h:p.h,n:p.n}:{d:null,h:null,n:"Curso completo"};
+}
+/* Lo que se ve junto a cada nombre al pasar lista: ausencias de la evaluación
+   en curso, no del año entero, porque el derecho a examen se pierde por
+   evaluación. */
+function acumulado(nombre){
+  const r=rango(periodoActual());
+  return computo(claseId,nombre,r.d,r.h).ef;
 }
 
 /* La lista se construye una vez por clase; marcar solo repinta esa fila.
@@ -493,8 +551,10 @@ function refrescarFila(nombre){
   const a=acumulado(nombre);
   f.el.dataset.s=st;
   f.st.textContent=ICONO[st];
-  f.acc.textContent=a>0?a+" F":"";
+  const lim=config.regla.limite;
+  f.acc.textContent=a>0?a+"/"+lim:"";
   f.acc.classList.toggle("oculto",a===0);
+  f.acc.className="acc"+(a===0?" oculto":a>=lim?" rojo":a>=lim-1?" ambar":"");
   f.note.classList.toggle("has",!!nota);
   f.el.setAttribute("aria-label",nombre+": "+(st==="P"?"presente":NOMBRE_EST[st]));
 }
@@ -664,7 +724,8 @@ async function sincronizar(claves){
   });
   try{
     const res=await fetch(config.syncUrl,{method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({sesiones:lote})});
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({sesiones:lote, listas:listas, horario:config.horario})});
     const data=await res.json();
     if(!data||!data.ok) throw new Error("respuesta inesperada");
     lote.forEach(x=>{ if(sesiones[x.clave]) sesiones[x.clave].sync=Date.now(); });
@@ -676,50 +737,155 @@ async function sincronizar(claves){
   actualizarAviso();
 }
 
-/* ========================= RESUMEN ========================= */
-function pintarResumen(){
-  const cont=$("#viewSum"), c=porId(claseId);
-  const meses=[...new Set(Object.keys(sesiones).filter(k=>k.split("|")[1]===claseId)
-    .map(k=>k.split("|")[0].slice(0,7)))].sort().reverse();
-  const filtro=cont.dataset.mes||"todo";
-  const tot={}, cuando={}; let nSes=0;
-  for(const k in sesiones){
-    const [f,id]=k.split("|");
-    if(id!==claseId) continue;
-    if(filtro!=="todo"&&!f.startsWith(filtro)) continue;
-    nSes++;
-    const e=sesiones[k].e||{};
-    for(const nm in e){
-      if(!tot[nm]){tot[nm]={F:0,R:0,J:0};cuando[nm]=[];}
-      tot[nm][e[nm]]++;
-      cuando[nm].push(ddmm(f)+" "+k.split("|")[2]+"ª "+e[nm]);
+/* Descarga de la hoja de cálculo los partes cerrados desde otro dispositivo.
+   Nunca pisa un parte a medio marcar ni uno más reciente que el remoto. */
+const INV={falta:"F",retraso:"R",justificada:"J"};
+async function traerDeNube(){
+  if(!config.syncUrl){ avisar("Primero configura la dirección de la hoja"); return; }
+  avisar("Descargando…");
+  try{
+    const res=await fetch(config.syncUrl,{method:"GET"});
+    const d=await res.json();
+    if(!d || !d.ok || !Array.isArray(d.sesiones)) throw new Error("respuesta inesperada");
+    let nuevas=0, act=0;
+    d.sesiones.forEach(s=>{
+      const k=s.clave; if(!k) return;
+      const local=sesiones[k];
+      if(local && !local.ts) return;                      // borrador local: intocable
+      if(local && local.ts && s.cerrado && local.ts>=s.cerrado) return;
+      const nuevo={e:{},t:{},ts:s.cerrado||1,sync:Date.now()};
+      (s.incidencias||[]).forEach(i=>{
+        if(!i.alumno) return;
+        const est=INV[i.estado]; if(est) nuevo.e[i.alumno]=est;
+        if(i.nota) nuevo.t[i.alumno]=i.nota;
+      });
+      sesiones[k]=nuevo;
+      local?act++:nuevas++;
+    });
+    const r=escribir(K_SES,sesiones);
+    if(d.listas && d.listas.l && confirm("La hoja también trae las listas de alumnos de tu iPhone.\n\n¿Quieres traerlas y sustituir las de este dispositivo?")){
+      listas=d.listas; escribir(K_LIS,listas);
     }
+    if(d.horario && Object.keys(d.horario).length){
+      config.horario=d.horario; escribir(K_CFG,config);
+    }
+    avisar(r.ok ? nuevas+" partes nuevos · "+act+" actualizados" : "Descargado, pero no se pudo guardar");
+    if(vista==="cfg") pintarAjustes(); else pintar();
+  }catch(e){
+    avisar("No se pudo descargar. Revisa la dirección y que el script esté publicado.");
   }
-  const filas=Object.entries(tot).sort((a,b)=>(b[1].F*3+b[1].R)-(a[1].F*3+a[1].R));
-  cont.innerHTML='<h2>'+esc(c.grupo)+' · '+esc(c.corto)+'</h2>'+
-    '<p class="lead">'+nSes+' sesión'+(nSes===1?"":"es")+' registrada'+(nSes===1?"":"s")+
-      ' · '+filas.length+' alumno'+(filas.length===1?"":"s")+' con incidencias</p>'+
-    '<div class="block"><h3>Periodo</h3><select id="selMes"><option value="todo">Todo el curso</option>'+
-      meses.map(m=>'<option value="'+m+'"'+(m===filtro?' selected':'')+'>'+ddmm(m)+'</option>').join("")+
-    '</select></div><div class="block">'+
-    (filas.length?'<table><tr><th>Alumno</th><th class="n">F</th><th class="n">R</th><th class="n">J</th></tr>'+
-      filas.map(([nm,v],i)=>'<tr class="alu" data-i="'+i+'"><td>'+esc(nm)+'</td><td class="n">'+(v.F||"·")+
-        '</td><td class="n">'+(v.R||"·")+'</td><td class="n">'+(v.J||"·")+'</td></tr>'+
-        '<tr class="det-fila hide" data-d="'+i+'"><td class="det" colspan="4">'+
-        esc(cuando[nm].join(" · "))+'</td></tr>').join("")+'</table>'+
-      '<p class="muted" style="margin:9px 0 0">Toca un alumno para ver las fechas.</p>'
-      :'<p class="muted">Ninguna incidencia en este periodo.</p>')+
-    '</div><div class="block"><h3>Exportar</h3>'+
+}
+
+/* ========================= ACUMULADO ========================= */
+let sumEval=null, sumClase="todas", sumAbierto=null;
+
+function pintarResumen(){
+  const cont=$("#viewSum");
+  if(sumEval===null) sumEval=periodoActual();
+  const r=rango(sumEval), R=config.regla;
+  const ids = sumClase==="todas" ? CLASES.map(x=>x.id) : [sumClase];
+
+  const filas=[];
+  ids.forEach(id=>{
+    const vistos=new Set();
+    for(const k in sesiones){
+      const p=k.split("|");
+      if(p[1]!==id) continue;
+      if(r.d && (p[0]<r.d||p[0]>r.h)) continue;
+      Object.keys(sesiones[k].e||{}).forEach(n=>vistos.add(n));
+    }
+    vistos.forEach(n=>{
+      const c=computo(id,n,r.d,r.h);
+      if(c.f||c.r||c.j) filas.push({id:id,n:n,c:c});
+    });
+  });
+  filas.sort((a,b)=> b.c.ef-a.c.ef || b.c.r-a.c.r || a.n.localeCompare(b.n,"es"));
+
+  const enRiesgo=filas.filter(x=>x.c.ef>=R.limite).length;
+  const cerca=filas.filter(x=>x.c.ef===R.limite-1).length;
+
+  const marcas=ef=>{
+    let s='<span class="marcas">';
+    for(let i=0;i<R.limite;i++) s+='<i class="'+(i<ef?"on":"")+'"></i>';
+    if(ef>R.limite) s+='<b>+'+(ef-R.limite)+'</b>';
+    return s+'</span>';
+  };
+  const desglose=c=>{
+    const p=[];
+    if(c.f) p.push(c.f+" falta"+(c.f>1?"s":""));
+    if(c.r) p.push(c.r+" retraso"+(c.r>1?"s":""));
+    if(c.j) p.push(c.j+" justificada"+(c.j>1?"s":""));
+    return p.join(" · ");
+  };
+
+  cont.innerHTML=
+    '<h2>Acumulado</h2>'+
+    '<p class="lead">'+esc(r.n)+' · '+filas.length+' alumno'+(filas.length===1?"":"s")+' con incidencias'+
+      (enRiesgo?' · <b class="no">'+enRiesgo+' sin derecho a examen</b>':'')+
+      (cerca?' · <b class="cerca">'+cerca+' a una de perderlo</b>':'')+'</p>'+
+
+    '<div class="chips" style="margin-bottom:8px">'+
+      (config.evaluaciones||[]).map((p,i)=>'<button class="chipL" data-ev="'+i+'" aria-pressed="'+
+        (sumEval===i)+'">'+esc(p.n.replace(" evaluación","ª ev."))+'</button>').join("")+
+      '<button class="chipL" data-ev="curso" aria-pressed="'+(sumEval==="curso")+'">Curso</button></div>'+
+    '<div class="chips" style="margin-bottom:14px">'+
+      '<button class="chipL" data-cl="todas" aria-pressed="'+(sumClase==="todas")+'">Todas</button>'+
+      CLASES.map(x=>'<button class="chipL" data-cl="'+x.id+'" aria-pressed="'+(sumClase===x.id)+
+        '">'+esc(x.grupo)+'<small>'+esc(x.corto)+'</small></button>').join("")+'</div>'+
+
+    (filas.length
+      ? filas.map((x,i)=>{
+          const cl=porId(x.id), nv=x.c.ef>=R.limite?"grave":x.c.ef===R.limite-1?"aviso":"";
+          return '<button class="riesgo '+nv+'" data-i="'+i+'">'+
+            '<span class="riN"><b>'+esc(x.n)+'</b><span>'+esc(cl.grupo+" · "+cl.corto)+
+              (desglose(x.c)?" · "+desglose(x.c):"")+'</span></span>'+
+            marcas(x.c.ef)+
+            '<span class="riC">'+x.c.ef+'/'+R.limite+'</span></button>'+
+            '<div class="riDet'+(sumAbierto===i?"":" hide")+'" data-d="'+i+'">'+
+              x.c.cuando.map(z=>ddmm(z.f)+" "+z.h+"ª "+NOMBRE_EST[z.st]).join(" · ")+'</div>';
+        }).join("")
+      : '<p class="muted">Ninguna incidencia en este periodo.</p>')+
+
+    '<div class="block" style="margin-top:16px"><h3>Cómo se cuenta</h3>'+
+      '<p class="muted">'+R.retrasos+' retrasos equivalen a 1 ausencia. Con '+R.limite+
+      ' ausencias se pierde el derecho al examen de evaluación. Las justificadas '+
+      (R.cuentanJust?'sí cuentan':'no cuentan')+'. Se puede cambiar en Ajustes.</p></div>'+
+
+    '<div class="block"><h3>Exportar</h3>'+
       '<button class="btn" id="expInc">Incidencias (CSV)</button>'+
-      '<button class="btn" id="expRes">Resumen por alumno (CSV)</button>'+
-      '<p class="muted">Incluye todos los grupos, no solo este.</p></div>';
-  $("#selMes").onchange=e=>{cont.dataset.mes=e.target.value;pintarResumen();};
-  cont.querySelectorAll("tr.alu").forEach(tr=>tr.onclick=()=>{
-    const d=cont.querySelector('tr[data-d="'+tr.dataset.i+'"]');
-    if(d) d.classList.toggle("hide");
+      '<button class="btn" id="expRes">Acumulado (CSV)</button></div>';
+
+  cont.querySelectorAll("[data-ev]").forEach(b=>b.onclick=()=>{
+    sumEval = b.dataset.ev==="curso" ? "curso" : +b.dataset.ev; sumAbierto=null; pintarResumen(); });
+  cont.querySelectorAll("[data-cl]").forEach(b=>b.onclick=()=>{
+    sumClase=b.dataset.cl; sumAbierto=null; pintarResumen(); });
+  cont.querySelectorAll(".riesgo").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;
+    sumAbierto = sumAbierto===i ? null : i;
+    cont.querySelectorAll(".riDet").forEach(d=>d.classList.toggle("hide",+d.dataset.d!==sumAbierto));
   });
   $("#expInc").onclick=exportarIncidencias;
-  $("#expRes").onclick=()=>exportarResumen(filtro);
+  $("#expRes").onclick=()=>exportarAcumulado(r);
+}
+
+function exportarAcumulado(r){
+  const filas=[["Grupo","Materia","Alumno","Faltas","Retrasos","Justificadas","Ausencias","Limite","Sin derecho"]];
+  CLASES.forEach(cl=>{
+    const vistos=new Set();
+    for(const k in sesiones){
+      const p=k.split("|");
+      if(p[1]!==cl.id) continue;
+      if(r.d && (p[0]<r.d||p[0]>r.h)) continue;
+      Object.keys(sesiones[k].e||{}).forEach(n=>vistos.add(n));
+    }
+    [...vistos].sort((a,b)=>a.localeCompare(b,"es")).forEach(n=>{
+      const c=computo(cl.id,n,r.d,r.h);
+      filas.push([cl.grupo,cl.mat,n,c.f,c.r,c.j,c.ef,config.regla.limite,
+        c.ef>=config.regla.limite?"sí":"no"]);
+    });
+  });
+  if(filas.length===1){ avisar("Todavía no hay incidencias que exportar"); return; }
+  entregar("acumulado_"+(r.d||"curso")+".csv",csv(filas),"text/csv");
 }
 
 /* Safari en iPhone ignora el atributo download y abre el archivo en una pestaña.
@@ -750,22 +916,6 @@ function exportarIncidencias(){
   });
   if(filas.length===1){ avisar("Todavía no hay incidencias que exportar"); return; }
   entregar("incidencias_"+fecha+".csv",csv(filas),"text/csv");
-}
-function exportarResumen(filtro){
-  const tot={};
-  for(const k in sesiones){
-    const [f,id]=k.split("|");
-    if(filtro!=="todo"&&!f.startsWith(filtro)) continue;
-    const e=sesiones[k].e||{};
-    for(const nm in e){const x=id+"|"+nm; if(!tot[x])tot[x]={F:0,R:0,J:0}; tot[x][e[nm]]++;}
-  }
-  const filas=[["Grupo","Materia","Alumno","Faltas","Retrasos","Justificadas"]];
-  Object.keys(tot).sort().forEach(x=>{
-    const [id,nm]=x.split("|"), c=porId(id), v=tot[x];
-    filas.push([c.grupo,c.mat,nm,v.F,v.R,v.J]);
-  });
-  if(filas.length===1){ avisar("Todavía no hay incidencias que exportar"); return; }
-  entregar("resumen_asistencia.csv",csv(filas),"text/csv");
 }
 
 /* ========================= AJUSTES ========================= */
@@ -810,8 +960,22 @@ function pintarAjustes(){
       '<input type="url" id="syncUrl" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec" value="'+esc(config.syncUrl||"")+'">'+
       '<p class="muted" style="margin:9px 0">Opcional. Cada parte confirmado se copia a tu hoja de cálculo. '+(pend?'<b>'+pend+' pendientes de enviar.</b>':'')+'</p>'+
       '<button class="btn" id="syncGuardar">Guardar dirección</button>'+
-      (config.syncUrl?'<button class="btn" id="syncAhora">Enviar pendientes ('+pend+')</button>':'')+'</div>'+
+      (config.syncUrl?'<button class="btn" id="syncAhora">Enviar pendientes ('+pend+')</button>'+
+        '<button class="btn" id="syncBajar">Traer de la nube</button>':'')+
+      (config.syncUrl?'<p class="muted">«Traer de la nube» es para el ordenador: descarga los partes que cerraste en el iPhone. No pisa nada que tengas a medias.</p>':'')+'</div>'+
 
+    '<div class="block"><h3>Norma de asistencia</h3>'+
+      '<div class="grid7"><div class="muted">retrasos</div><input type="number" id="rRet" min="1" max="9" value="'+config.regla.retrasos+'">'+
+        '<div class="muted" style="grid-column:span 1">= 1 ausencia</div></div>'+
+      '<div class="grid7"><div class="muted">límite</div><input type="number" id="rLim" min="1" max="9" value="'+config.regla.limite+'">'+
+        '<div class="muted">ausencias sin examen</div></div>'+
+      '<label class="check"><input type="checkbox" id="rJus"'+(config.regla.cuentanJust?" checked":"")+'> Las justificadas también cuentan</label>'+
+    '</div>'+
+    '<div class="block"><h3>Evaluaciones</h3>'+
+      (config.evaluaciones||[]).map((p,i)=>'<div class="grid7"><div class="muted">'+(i+1)+'ª</div>'+
+        '<input type="date" data-evd="'+i+'" value="'+p.d+'">'+
+        '<input type="date" data-evh="'+i+'" value="'+p.h+'"></div>').join("")+
+      '<p class="muted">El acumulado se cuenta por evaluación, no por curso. Ajusta las fechas a las de Tajamar.</p></div>'+
     '<div class="block"><h3>Listas de alumnos</h3><div id="edAlum"></div></div>'+
     '<div class="block"><h3>Tramos horarios</h3>'+
       '<div class="grid7"><div></div><div class="muted">empieza</div><div class="muted">acaba</div></div>'+
@@ -846,6 +1010,13 @@ function pintarAjustes(){
       '<button class="btn warn" id="forzarAct">Forzar actualización</button>'+
       '<p class="muted">Ninguna de las dos toca tus registros.</p></div>';
 
+  $("#rRet").onchange=e=>{ config.regla.retrasos=Math.max(1,+e.target.value||3); escribir(K_CFG,config); avisar("Norma actualizada"); };
+  $("#rLim").onchange=e=>{ config.regla.limite=Math.max(1,+e.target.value||3); escribir(K_CFG,config); avisar("Norma actualizada"); };
+  $("#rJus").onchange=e=>{ config.regla.cuentanJust=e.target.checked; escribir(K_CFG,config); avisar("Norma actualizada"); };
+  cont.querySelectorAll("[data-evd]").forEach(i=>i.onchange=e=>{
+    config.evaluaciones[+e.target.dataset.evd].d=e.target.value; escribir(K_CFG,config); });
+  cont.querySelectorAll("[data-evh]").forEach(i=>i.onchange=e=>{
+    config.evaluaciones[+e.target.dataset.evh].h=e.target.value; escribir(K_CFG,config); });
   pintarAlumnos();
   cont.querySelectorAll("select[data-dh]").forEach(s=>s.onchange=e=>{
     const dh=e.target.dataset.dh;
@@ -899,6 +1070,7 @@ function pintarAjustes(){
     avisar(v?"Dirección guardada":"Copia en la nube desactivada"); pintarAjustes();
   };
   if($("#syncAhora")) $("#syncAhora").onclick=async()=>{ avisar("Enviando…"); await sincronizar(); pintarAjustes(); };
+  if($("#syncBajar")) $("#syncBajar").onclick=traerDeNube;
   $("#borrar").onclick=()=>{
     if(confirm("¿Borrar TODOS los registros de asistencia? Descarga antes una copia.")){
       sesiones={}; escribir(K_SES,sesiones); avisar("Registros borrados"); pintarAjustes();
