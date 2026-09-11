@@ -140,8 +140,13 @@ main{max-width:640px;margin:0 auto}
 .row[data-s="F"] .st{background:var(--falta);border-color:var(--falta);color:#fff}
 .row[data-s="R"]{background:var(--retraso-bg);border-color:var(--retraso-ln)}
 .row[data-s="R"] .st{background:var(--retraso);border-color:var(--retraso);color:#fff}
-.row[data-s="J"]{background:var(--just-bg);border-color:var(--just-ln)}
-.row[data-s="J"] .st{background:var(--just);border-color:var(--just);color:#fff}
+.row[data-s="FJ"],.row[data-s="RJ"]{background:var(--just-bg);border-color:var(--just-ln)}
+.row[data-s="FJ"] .st,.row[data-s="RJ"] .st{background:var(--just);border-color:var(--just);color:#fff}
+.row[data-s="FJ"] .st::after,.row[data-s="RJ"] .st::after{content:"✓";position:absolute;
+  margin:-16px 0 0 20px;font-size:10px;background:var(--just);color:#fff;
+  border-radius:50%;width:14px;height:14px;line-height:14px;text-align:center;
+  border:1.5px solid var(--card)}
+.row .st{position:relative}
 
 /* ---------- barra inferior ---------- */
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(247,246,243,.97);
@@ -182,6 +187,14 @@ select,input[type=time],input[type=url],input[type=date]{border:1px solid var(--
 .grid7{display:grid;grid-template-columns:30px 1fr 1fr;gap:7px;align-items:center;margin-bottom:6px}
 .grid7 input[type=number]{width:100%}
 .check{display:flex;align-items:center;gap:9px;font-size:14px;margin-top:6px;cursor:pointer}
+.seg{display:flex;gap:6px;margin:4px 0 10px}
+.seg button{flex:1;padding:12px 0;border:1px solid var(--line);background:#fff;border-radius:10px;
+  font-size:15px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.riC.sinNorma{color:var(--ink-3)}
+.inc{display:inline-block;margin:0 6px 6px 0;padding:7px 10px;border-radius:8px;
+  border:1px solid var(--line);background:#fff;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.inc.just{background:var(--just-bg);border-color:var(--just-ln);color:var(--just)}
 .check input{width:20px;height:20px;flex:0 0 auto}
 .muted{color:var(--ink-2);font-size:13px}
 .warnbox{background:var(--retraso-bg);border:1px solid var(--retraso-ln);border-radius:11px;
@@ -259,10 +272,15 @@ const CLASES = [
 const porId = id => CLASES.find(c=>c.id===id) || CLASES[0];
 const HORAS=[1,2,3,4,5,6,7];
 const DIAS=["Lunes","Martes","Miércoles","Jueves","Viernes"];
-const CICLO={P:"F",F:"R",R:"J",J:"P"};
-const ICONO={P:"",F:"F",R:"R",J:"J"};
-const NOMBRE_EST={F:"falta",R:"retraso",J:"justificada"};
-const VERSION="1.7";   // debe coincidir con el VERSION de sw.js
+/* Estados: F falta, R retraso, y sus versiones justificadas FJ y RJ.
+   El toque solo cicla entre presente, falta y retraso; justificar es un acto
+   aparte, porque el justificante casi siempre llega días después. */
+const CICLO={P:"F",F:"R",R:"P"};
+const ICONO={P:"",F:"F",R:"R",FJ:"F",RJ:"R"};
+const NOMBRE_EST={F:"falta",R:"retraso",FJ:"falta justificada",RJ:"retraso justificado"};
+const esJust = e => e==="FJ"||e==="RJ";
+const baseDe = e => (e==="FJ"||e==="F") ? "F" : (e==="RJ"||e==="R") ? "R" : "P";
+const VERSION="1.8";   // debe coincidir con el VERSION de sw.js
 
 /* ================= ALMACENAMIENTO VERIFICADO ================= */
 let persistente=true, modoPersistente=null, ultimaVerif=null, fallo=null, corrupto=false;
@@ -318,6 +336,17 @@ let sesiones = leerObjeto(K_SES, {});
    cambio la app, tus altas, bajas y correcciones siguen intactas. */
 let listas = leerObjeto(K_LIS, null);
 if(!listas || !listas.l) listas = {v:1, l:JSON.parse(JSON.stringify(LISTAS_DEF))};
+/* Los registros hechos con versiones anteriores guardaban "J" como estado.
+   Se convierten una sola vez en "falta justificada", que es lo que eran. */
+(function migrarJustificadas(){
+  let n=0;
+  for(const k in sesiones){
+    const e=sesiones[k].e||{};
+    for(const nm in e) if(e[nm]==="J"){ e[nm]="FJ"; n++; }
+  }
+  if(n) escribir(K_SES,sesiones);
+})();
+
 function guardarListas(){
   const r=escribir(K_LIS,listas);
   if(!r.ok) avisar("No se han podido guardar las listas: "+r.motivo);
@@ -334,6 +363,8 @@ const CFG_DEF = {cfgVersion:CFG_VERSION, horario:HORARIO,
   /* Norma de Bachillerato: 3 retrasos = 1 ausencia; 3 ausencias = sin examen.
      Las justificadas no cuentan salvo que lo cambies en Ajustes. */
   regla: {retrasos:3, limite:3, cuentanJust:false},
+  /* La norma de ausencias es de Bachillerato: en 2º de ESO no computa. */
+  sinNorma: ["2A-GEH"],
   evaluaciones: [
     {n:"1ª evaluación", d:"2026-09-07", h:"2026-12-19"},
     {n:"2ª evaluación", d:"2027-01-08", h:"2027-03-26"},
@@ -488,14 +519,19 @@ function computo(id,nombre,desde,hasta){
     if(desde && (p[0]<desde || p[0]>hasta)) continue;
     const st=(sesiones[k].e||{})[nombre];
     if(!st) continue;
-    if(st==="F")f++; else if(st==="R")r++; else if(st==="J")j++;
-    cuando.push({f:p[0],h:+p[2],st:st});
+    const R0=config.regla;
+    if(st==="F") f++;
+    else if(st==="R") r++;
+    else if(st==="FJ"){ j++; if(R0.cuentanJust) f++; }
+    else if(st==="RJ"){ j++; if(R0.cuentanJust) r++; }
+    cuando.push({f:p[0],h:+p[2],st:st,k:k});
   }
   const R=config.regla;
-  const ef = f + Math.floor(r/R.retrasos) + (R.cuentanJust?j:0);
+  const ef = f + Math.floor(r/R.retrasos);
   cuando.sort((a,b)=>a.f<b.f?-1:a.f>b.f?1:a.h-b.h);
   return {f:f,r:r,j:j,ef:ef,cuando:cuando};
 }
+const computaClase = id => !(config.sinNorma||[]).includes(id);
 function periodoActual(){
   const hoy=iso(new Date());
   const i=(config.evaluaciones||[]).findIndex(p=>hoy>=p.d&&hoy<=p.h);
@@ -509,9 +545,13 @@ function rango(sel){
 /* Lo que se ve junto a cada nombre al pasar lista: ausencias de la evaluación
    en curso, no del año entero, porque el derecho a examen se pierde por
    evaluación. */
+/* En Bachillerato: ausencias efectivas sobre el límite. En 2º de ESO, donde
+   la norma no se aplica, simplemente el número de faltas. */
 function acumulado(nombre){
-  const r=rango(periodoActual());
-  return computo(claseId,nombre,r.d,r.h).ef;
+  const r=rango(periodoActual()), c=computo(claseId,nombre,r.d,r.h);
+  return computaClase(claseId)
+    ? {txt:c.ef?c.ef+"/"+config.regla.limite:"", nivel:c.ef>=config.regla.limite?"rojo":c.ef>=config.regla.limite-1?"ambar":""}
+    : {txt:c.f?c.f+" F":"", nivel:""};
 }
 
 /* La lista se construye una vez por clase; marcar solo repinta esa fila.
@@ -534,7 +574,9 @@ function construirLista(){
       '<div class="acc oculto"></div><div class="note">✎</div><div class="st"></div>';
     row.onclick=e=>{
       if(movido) return;                         // era un scroll, no un toque
-      if(e.target.classList.contains("note")) abrirNota(nombre); else marcar(nombre);
+      if(e.target.classList.contains("note"))
+        abrirIncidencia(clave(),nombre,()=>{ refrescarFila(nombre); pintarTally(); });
+      else marcar(nombre);
     };
     row.onkeydown=e=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();marcar(nombre);} };
     filas.set(nombre,{el:row, acc:row.querySelector(".acc"),
@@ -550,11 +592,9 @@ function refrescarFila(nombre){
   const s=ses(), st=(s&&s.e&&s.e[nombre])||"P", nota=(s&&s.t&&s.t[nombre])||"";
   const a=acumulado(nombre);
   f.el.dataset.s=st;
-  f.st.textContent=ICONO[st];
-  const lim=config.regla.limite;
-  f.acc.textContent=a>0?a+"/"+lim:"";
-  f.acc.classList.toggle("oculto",a===0);
-  f.acc.className="acc"+(a===0?" oculto":a>=lim?" rojo":a>=lim-1?" ambar":"");
+  f.st.textContent=ICONO[st]||"";
+  f.acc.textContent=a.txt;
+  f.acc.className="acc"+(a.txt?" "+a.nivel:" oculto");
   f.note.classList.toggle("has",!!nota);
   f.el.setAttribute("aria-label",nombre+": "+(st==="P"?"presente":NOMBRE_EST[st]));
 }
@@ -572,12 +612,13 @@ function marcar(nombre){
 
 function pintarTally(){
   const s=ses(), e=(s&&s.e)||{}, n={F:0,R:0,J:0};
-  Object.values(e).forEach(v=>{ if(n[v]!==undefined) n[v]++; });
+  Object.values(e).forEach(v=>{ if(esJust(v)) n.J++; else if(n[v]!==undefined) n[v]++; });
+  const ausentes=Object.keys(e).length;
   const tot=alumnos().length, p=[];
   if(n.F)p.push(n.F+" falta"+(n.F>1?"s":""));
   if(n.R)p.push(n.R+" retraso"+(n.R>1?"s":""));
   if(n.J)p.push(n.J+" justificada"+(n.J>1?"s":""));
-  $("#tally").innerHTML="<b>"+(tot-n.F-n.R-n.J)+"/"+tot+"</b> presentes"+(p.length?" · "+p.join(" · "):"");
+  $("#tally").innerHTML="<b>"+(tot-ausentes)+"/"+tot+"</b> presentes"+(p.length?" · "+p.join(" · "):"");
   const b=$("#btnSave");
   if(s&&s.ts){ b.textContent="Cerrado ✓"; b.classList.add("done"); }
   else { b.textContent="Confirmar"; b.classList.remove("done"); $("#recibo").innerHTML=""; }
@@ -623,7 +664,7 @@ $("#btnSave").onclick=async ()=>{
 };
 let reciboBase="";
 
-/* ---------- nota ---------- */
+/* ---------- una incidencia: estado, justificación y nota ---------- */
 function hoja(html){
   const ovl=document.createElement("div"); ovl.className="ovl";
   ovl.innerHTML='<div class="sheet">'+html+'</div>';
@@ -631,24 +672,51 @@ function hoja(html){
   ovl.onclick=e=>{ if(e.target===ovl) ovl.remove(); };
   return ovl;
 }
-function abrirNota(nombre){
-  const k=clave(), actual=(sesiones[k]&&sesiones[k].t&&sesiones[k].t[nombre])||"";
-  const ovl=hoja('<h4>'+esc(nombre)+'</h4><p class="sub">Nota de esta sesión</p>'+
-    '<textarea id="nt" placeholder="Justificante, aviso a familia, se marcha a las 12:30…">'+esc(actual)+'</textarea>'+
-    '<div style="margin-top:10px;display:flex;gap:8px"><button class="btn" id="ntC">Cancelar</button>'+
-    '<button class="btn dark" id="ntG" style="flex:1">Guardar nota</button></div>');
-  ovl.querySelector("#ntC").onclick=()=>ovl.remove();
-  ovl.querySelector("#ntG").onclick=()=>{
-    if(!sesiones[k]) sesiones[k]={e:{},t:{},ts:null,sync:null};
-    if(!sesiones[k].t) sesiones[k].t={};
-    const v=ovl.querySelector("#nt").value.trim();
-    if(v) sesiones[k].t[nombre]=v; else delete sesiones[k].t[nombre];
-    sesiones[k].sync=null;
+
+/* Se abre igual desde la lista del día que desde el acumulado, para que
+   justificar una falta de la semana pasada no obligue a ir hasta su parte. */
+function abrirIncidencia(k,nombre,alGuardar){
+  const s=sesiones[k];
+  if(!s||!s.e||!s.e[nombre]) return;
+  const p=k.split("|"), cl=porId(p[1]);
+  let bas=baseDe(s.e[nombre]), just=esJust(s.e[nombre]);
+  const nota=(s.t&&s.t[nombre])||"";
+
+  const ovl=hoja('<h4>'+esc(nombre)+'</h4>'+
+    '<p class="sub">'+esc(cl.grupo+" · "+cl.corto)+' · '+diaDe(p[0])+' '+ddmm(p[0])+' · '+p[2]+'ª</p>'+
+    '<div class="seg" id="inSeg">'+
+      '<button data-b="F"'+(bas==="F"?' class="on"':'')+'>Falta</button>'+
+      '<button data-b="R"'+(bas==="R"?' class="on"':'')+'>Retraso</button></div>'+
+    '<label class="check" id="inJusL"><input type="checkbox" id="inJus"'+(just?" checked":"")+'> '+
+      'Justificada · no cuenta para la norma</label>'+
+    '<textarea id="inNota" placeholder="Justificante médico, aviso de familia, se marcha a las 12:30…">'+esc(nota)+'</textarea>'+
+    '<div style="margin-top:12px;display:flex;gap:8px">'+
+      '<button class="btn" id="inC">Cancelar</button>'+
+      '<button class="btn dark" id="inG" style="flex:1">Guardar</button></div>'+
+    '<button class="btn warn" id="inQ" style="width:100%;margin-top:10px">Quitar la incidencia</button>');
+
+  const seg=ovl.querySelector("#inSeg");
+  seg.querySelectorAll("[data-b]").forEach(b=>b.onclick=()=>{
+    bas=b.dataset.b;
+    seg.querySelectorAll("[data-b]").forEach(o=>o.classList.toggle("on",o.dataset.b===bas));
+  });
+  const cerrar=()=>{ ovl.remove(); if(alGuardar) alGuardar(); };
+  ovl.querySelector("#inC").onclick=()=>ovl.remove();
+  ovl.querySelector("#inG").onclick=()=>{
+    if(!s.t) s.t={};
+    s.e[nombre]=bas+(ovl.querySelector("#inJus").checked?"J":"");
+    const v=ovl.querySelector("#inNota").value.trim();
+    if(v) s.t[nombre]=v; else delete s.t[nombre];
+    s.sync=null;
     const r=escribir(K_SES,sesiones);
-    ovl.remove(); refrescarFila(nombre); actualizarBanner();
-    if(!r.ok) mostrarRecibo(false,"No se ha podido guardar la nota: "+r.motivo);
+    if(!r.ok) avisar("No se ha podido guardar: "+r.motivo);
+    cerrar();
   };
-  setTimeout(()=>ovl.querySelector("#nt").focus(),50);
+  ovl.querySelector("#inQ").onclick=()=>{
+    if(!confirm("Quitar la incidencia de "+nombre+" del "+ddmm(p[0])+". ¿Seguro?")) return;
+    delete s.e[nombre]; if(s.t) delete s.t[nombre];
+    s.sync=null; escribir(K_SES,sesiones); cerrar();
+  };
 }
 
 /* ---------- selector: día, clases de ese día y cualquier otra ---------- */
@@ -739,7 +807,8 @@ async function sincronizar(claves){
 
 /* Descarga de la hoja de cálculo los partes cerrados desde otro dispositivo.
    Nunca pisa un parte a medio marcar ni uno más reciente que el remoto. */
-const INV={falta:"F",retraso:"R",justificada:"J"};
+const INV={"falta":"F","retraso":"R","falta justificada":"FJ",
+           "retraso justificado":"RJ","justificada":"FJ"};
 async function traerDeNube(){
   if(!config.syncUrl){ avisar("Primero configura la dirección de la hoja"); return; }
   avisar("Descargando…");
@@ -777,7 +846,7 @@ async function traerDeNube(){
 }
 
 /* ========================= ACUMULADO ========================= */
-let sumEval=null, sumClase="todas", sumAbierto=null;
+let sumEval=null, sumClase="todas", sumAbierto=null, sumFilas=[];
 
 function pintarResumen(){
   const cont=$("#viewSum");
@@ -800,9 +869,11 @@ function pintarResumen(){
     });
   });
   filas.sort((a,b)=> b.c.ef-a.c.ef || b.c.r-a.c.r || a.n.localeCompare(b.n,"es"));
+  sumFilas=filas;
 
-  const enRiesgo=filas.filter(x=>x.c.ef>=R.limite).length;
-  const cerca=filas.filter(x=>x.c.ef===R.limite-1).length;
+  const conNorma=filas.filter(x=>computaClase(x.id));
+  const enRiesgo=conNorma.filter(x=>x.c.ef>=R.limite).length;
+  const cerca=conNorma.filter(x=>x.c.ef===R.limite-1).length;
 
   const marcas=ef=>{
     let s='<span class="marcas">';
@@ -835,21 +906,30 @@ function pintarResumen(){
 
     (filas.length
       ? filas.map((x,i)=>{
-          const cl=porId(x.id), nv=x.c.ef>=R.limite?"grave":x.c.ef===R.limite-1?"aviso":"";
+          const cl=porId(x.id), norma=computaClase(x.id);
+          const nv=!norma?"":x.c.ef>=R.limite?"grave":x.c.ef===R.limite-1?"aviso":"";
           return '<button class="riesgo '+nv+'" data-i="'+i+'">'+
             '<span class="riN"><b>'+esc(x.n)+'</b><span>'+esc(cl.grupo+" · "+cl.corto)+
               (desglose(x.c)?" · "+desglose(x.c):"")+'</span></span>'+
-            marcas(x.c.ef)+
-            '<span class="riC">'+x.c.ef+'/'+R.limite+'</span></button>'+
+            (norma?marcas(x.c.ef)+'<span class="riC">'+x.c.ef+'/'+R.limite+'</span>'
+                  :'<span class="riC sinNorma">—</span>')+
+            '</button>'+
             '<div class="riDet'+(sumAbierto===i?"":" hide")+'" data-d="'+i+'">'+
-              x.c.cuando.map(z=>ddmm(z.f)+" "+z.h+"ª "+NOMBRE_EST[z.st]).join(" · ")+'</div>';
+              x.c.cuando.map((z,zi)=>'<button class="inc'+(esJust(z.st)?" just":"")+
+                '" data-fi="'+i+'" data-ci="'+zi+'">'+ddmm(z.f)+' · '+z.h+'ª · '+
+                NOMBRE_EST[z.st]+'</button>').join("")+
+              '<p class="muted" style="margin:8px 0 0">Toca una incidencia para justificarla o corregirla.</p>'+
+            '</div>';
         }).join("")
       : '<p class="muted">Ninguna incidencia en este periodo.</p>')+
 
     '<div class="block" style="margin-top:16px"><h3>Cómo se cuenta</h3>'+
       '<p class="muted">'+R.retrasos+' retrasos equivalen a 1 ausencia. Con '+R.limite+
       ' ausencias se pierde el derecho al examen de evaluación. Las justificadas '+
-      (R.cuentanJust?'sí cuentan':'no cuentan')+'. Se puede cambiar en Ajustes.</p></div>'+
+      (R.cuentanJust?'sí cuentan':'no cuentan')+'.'+
+      ((config.sinNorma||[]).length?' No se aplica en '+
+        (config.sinNorma||[]).map(id=>esc(porId(id).grupo)).join(", ")+'.':'')+
+      ' Se puede cambiar en Ajustes.</p></div>'+
 
     '<div class="block"><h3>Exportar</h3>'+
       '<button class="btn" id="expInc">Incidencias (CSV)</button>'+
@@ -863,6 +943,11 @@ function pintarResumen(){
     const i=+b.dataset.i;
     sumAbierto = sumAbierto===i ? null : i;
     cont.querySelectorAll(".riDet").forEach(d=>d.classList.toggle("hide",+d.dataset.d!==sumAbierto));
+  });
+  cont.querySelectorAll(".inc").forEach(b=>b.onclick=e=>{
+    e.stopPropagation();
+    const x=sumFilas[+b.dataset.fi], z=x.c.cuando[+b.dataset.ci];
+    abrirIncidencia(z.k, x.n, ()=>{ pintarResumen(); if(vista==="lista") construirLista(); });
   });
   $("#expInc").onclick=exportarIncidencias;
   $("#expRes").onclick=()=>exportarAcumulado(r);
@@ -880,8 +965,9 @@ function exportarAcumulado(r){
     }
     [...vistos].sort((a,b)=>a.localeCompare(b,"es")).forEach(n=>{
       const c=computo(cl.id,n,r.d,r.h);
-      filas.push([cl.grupo,cl.mat,n,c.f,c.r,c.j,c.ef,config.regla.limite,
-        c.ef>=config.regla.limite?"sí":"no"]);
+      filas.push([cl.grupo,cl.mat,n,c.f,c.r,c.j,
+        computaClase(cl.id)?c.ef:"", computaClase(cl.id)?config.regla.limite:"",
+        !computaClase(cl.id)?"no aplica":(c.ef>=config.regla.limite?"sí":"no")]);
     });
   });
   if(filas.length===1){ avisar("Todavía no hay incidencias que exportar"); return; }
@@ -970,6 +1056,9 @@ function pintarAjustes(){
       '<div class="grid7"><div class="muted">límite</div><input type="number" id="rLim" min="1" max="9" value="'+config.regla.limite+'">'+
         '<div class="muted">ausencias sin examen</div></div>'+
       '<label class="check"><input type="checkbox" id="rJus"'+(config.regla.cuentanJust?" checked":"")+'> Las justificadas también cuentan</label>'+
+      '<p class="muted" style="margin:12px 0 6px">Asignaturas donde se aplica</p>'+
+      CLASES.map(x=>'<label class="check"><input type="checkbox" data-norma="'+x.id+'"'+
+        (computaClase(x.id)?" checked":"")+'> '+esc(x.grupo+" · "+x.corto)+'</label>').join("")+
     '</div>'+
     '<div class="block"><h3>Evaluaciones</h3>'+
       (config.evaluaciones||[]).map((p,i)=>'<div class="grid7"><div class="muted">'+(i+1)+'ª</div>'+
@@ -1013,6 +1102,12 @@ function pintarAjustes(){
   $("#rRet").onchange=e=>{ config.regla.retrasos=Math.max(1,+e.target.value||3); escribir(K_CFG,config); avisar("Norma actualizada"); };
   $("#rLim").onchange=e=>{ config.regla.limite=Math.max(1,+e.target.value||3); escribir(K_CFG,config); avisar("Norma actualizada"); };
   $("#rJus").onchange=e=>{ config.regla.cuentanJust=e.target.checked; escribir(K_CFG,config); avisar("Norma actualizada"); };
+  cont.querySelectorAll("[data-norma]").forEach(i=>i.onchange=e=>{
+    const id=e.target.dataset.norma;
+    const s=new Set(config.sinNorma||[]);
+    if(e.target.checked) s.delete(id); else s.add(id);
+    config.sinNorma=[...s]; escribir(K_CFG,config); avisar("Norma actualizada");
+  });
   cont.querySelectorAll("[data-evd]").forEach(i=>i.onchange=e=>{
     config.evaluaciones[+e.target.dataset.evd].d=e.target.value; escribir(K_CFG,config); });
   cont.querySelectorAll("[data-evh]").forEach(i=>i.onchange=e=>{
